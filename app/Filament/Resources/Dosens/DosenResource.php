@@ -23,6 +23,10 @@ class DosenResource extends Resource
     public static function form(Schema $schema): Schema { return DosenForm::configure($schema); }
     public static function table(Table $table): Table { return DosensTable::configure($table); }
 
+    public static function canCreate(): bool { return true; }
+    public static function canEdit($record): bool { return true; }
+    public static function canDelete($record): bool { return true; }
+
     public static function getPages(): array
     {
         return [
