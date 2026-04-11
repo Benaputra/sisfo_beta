@@ -9,11 +9,13 @@ class WhatsAppService
 {
     protected string $token;
     protected string $endpoint;
+    protected string $secretKey;
 
     public function __construct()
     {
-        $this->token    = config('services.wablas.token');
-        $this->endpoint = config('services.wablas.endpoint', 'https://console.wablas.com/api/send-message');
+        $this->token      = config('services.wablas.token');
+        $this->endpoint   = config('services.wablas.endpoint', 'https://sby.wablas.com/api/send-message');
+        $this->secretKey  = config('services.wablas.secret_key', '');
     }
 
     /**
@@ -37,8 +39,9 @@ class WhatsAppService
                     'Authorization' => $this->token,
                     'Content-Type'  => 'application/json',
                 ])->post($this->endpoint, [
-                    'phone'   => $nomor,
-                    'message' => $pesan,
+                    'phone'      => $nomor,
+                    'message'    => $pesan,
+                    'secret_key' => $this->secretKey,  // Wajib untuk pengiriman aktual
                 ]);
 
             $body = $response->json();
