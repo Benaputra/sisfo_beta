@@ -35,8 +35,9 @@ return [
         ],
     ],
 
-    'fonnte' => [
-        'token' => env('FONNTE_TOKEN'),
+    'wablas' => [
+        'token'    => env('WABLAS_TOKEN'),
+        'endpoint' => env('WABLAS_ENDPOINT', 'https://console.wablas.com/api/send-message'),
     ],
 
 ];

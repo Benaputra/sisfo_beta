@@ -59,12 +59,6 @@ class SeminarForm
                     ->searchable()
                     ->disabled(fn ($record) => $record !== null && auth()->user()->hasRole('mahasiswa')),
 
-                Select::make('penguji2_id')
-                    ->label('Penguji 2')
-                    ->relationship('penguji2', 'nama')
-                    ->searchable()
-                    ->disabled(fn ($record) => $record !== null && auth()->user()->hasRole('mahasiswa')),
-
                 DatePicker::make('tanggal')
                     ->required()
                     ->disabled(fn ($record) => $record !== null && auth()->user()->hasRole('mahasiswa')),

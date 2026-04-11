@@ -18,7 +18,6 @@ class Seminar extends Model
         'pembimbing1_id',
         'pembimbing2_id',
         'penguji_seminar_id',
-        'penguji2_id',
         'tanggal',
         'tempat',
         'bukti_bayar',
@@ -70,10 +69,5 @@ class Seminar extends Model
     public function pengujiSeminar(): BelongsTo
     {
         return $this->belongsTo(Dosen::class, 'penguji_seminar_id');
-    }
-
-    public function penguji2(): BelongsTo
-    {
-        return $this->belongsTo(Dosen::class, 'penguji2_id');
     }
 }
