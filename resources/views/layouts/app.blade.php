@@ -109,6 +109,18 @@
                 </svg>
                 Help Center
             </a>
+
+            <div style="margin-top:auto; padding-top:20px;">
+                <form method="POST" action="{{ route('portal.logout') }}">
+                    @csrf
+                    <button type="submit" class="sidebar-nav-item" style="width:100%; border:none; background:none; cursor:pointer; color:#EF4444;">
+                        <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                            <path d="M13 9H3m0 0l3-3m-3 3l3 3M11 3h3a2 2 0 012 2v8a2 2 0 01-2 2h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Logout Session
+                    </button>
+                </form>
+            </div>
         </nav>
     </aside>
 

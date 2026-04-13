@@ -8,9 +8,11 @@ Route::get('/', function () {
 });
 
 // Portal Routes
-Route::get('/portal/login', [PortalController::class, 'login'])->name('portal.login');
+Route::get('/portal/login', [PortalController::class, 'login'])->name('login');
+Route::post('/portal/login', [PortalController::class, 'authenticate'])->name('portal.login.post');
+Route::post('/portal/logout', [PortalController::class, 'logout'])->name('portal.logout');
 
-Route::prefix('portal')->name('portal.')->group(function () {
+Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/mahasiswa', [PortalController::class, 'mahasiswa'])->name('mahasiswa');
     Route::get('/seminar', [PortalController::class, 'seminar'])->name('seminar');

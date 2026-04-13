@@ -59,20 +59,21 @@
                     </div>
                 @endif
 
-                @if ($errors->any())
+                 @if ($errors->any())
                     <div style="background:#FEE2E2; border:1px solid #FCA5A5; border-radius:8px; padding:10px 14px; font-size:13px; color:#991B1B; margin-bottom:16px;">
-                        @foreach ($errors->all() as $error)
-                            <div>{{ $error }}</div>
-                        @endforeach
+                        <ul style="margin:0; padding-left:18px;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 @endif
-
-                {{-- Pilih Identitas --}}
+                       {{-- Pilih Identitas --}}
                 <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.7px; color:#6B7280; margin-bottom:8px;">
                     SELECT IDENTITY
                 </div>
                 <div class="identity-selector" id="identity-selector">
-                    <button type="button" class="identity-option selected" id="btn-student" onclick="selectIdentity('student')">
+                    <button type="button" class="identity-option selected" id="btn-mahasiswa" onclick="selectIdentity('mahasiswa')">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <path d="M7 1L1 4.5v.5h12v-.5L7 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
                             <rect x="2" y="5" width="2" height="4" stroke="currentColor" stroke-width="1.2"/>
@@ -80,43 +81,50 @@
                             <rect x="10" y="5" width="2" height="4" stroke="currentColor" stroke-width="1.2"/>
                             <path d="M0.5 13h13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
                         </svg>
-                        Student
+                        Mahasiswa
                     </button>
-                    <button type="button" class="identity-option" id="btn-lecturer" onclick="selectIdentity('lecturer')">
+                    <button type="button" class="identity-option" id="btn-dosen" onclick="selectIdentity('dosen')">
                         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                             <circle cx="7" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/>
                             <path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
                         </svg>
-                        Lecturer
+                        Dosen
+                    </button>
+                    <button type="button" class="identity-option" id="btn-sivitas" onclick="selectIdentity('sivitas')">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 1L3 4v6l4 3 4-3V4l-4-3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+                            <path d="M7 6v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                        </svg>
+                        Sivitas
                     </button>
                 </div>
-                <input type="hidden" id="identity-value" name="identity" value="student">
+                <input type="hidden" id="identity-value" name="identity" value="mahasiswa">
 
                 {{-- Form --}}
-                <form method="POST" action="{{ route('portal.login') }}">
+                <form method="POST" action="{{ route('portal.login.post') }}">
                     @csrf
-                    <input type="hidden" name="identity" id="identity-input" value="student">
+                    <input type="hidden" name="identity" id="identity-input" value="mahasiswa">
 
                     <div class="form-group">
-                        <label for="email" class="form-label">Institutional Email</label>
+                        <label for="email" class="form-label">Email Institusi</label>
                         <div class="form-control-icon">
                             <svg class="icon" viewBox="0 0 15 15" fill="none">
                                 <path d="M1 3.5h13M1 3.5v9h13v-9M1 3.5l6.5 5 6.5-5" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
                             </svg>
-                            <input id="email" type="email" name="email" class="form-control"
-                                   placeholder="scholar@university.edu"
+                            <input id="email" type="email" name="email" class="form-control" 
+                                   placeholder="akademik@upb.ac.id"
                                    value="{{ old('email') }}" autocomplete="email" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="password" class="form-label">Security Key</label>
+                        <label for="password" class="form-label">Password</label>
                         <div class="form-control-icon">
                             <svg class="icon" viewBox="0 0 15 15" fill="none">
                                 <circle cx="5.5" cy="6.5" r="3" stroke="currentColor" stroke-width="1.2"/>
                                 <path d="M8 9l5 5M12 9l1.5 1.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
                             </svg>
-                            <input id="password" type="password" name="password" class="form-control"
+                            <input id="password" type="password" name="password" class="form-control" 
                                    placeholder="••••••••••"
                                    autocomplete="current-password" required>
                         </div>
@@ -125,24 +133,24 @@
                     <div class="login-options">
                         <label class="login-remember">
                             <input type="checkbox" name="remember" id="remember">
-                            <span style="font-size:12.5px; color:#6B7280;">Keep me signed in</span>
+                            <span style="font-size:12.5px; color:#6B7280;">Ingat saya</span>
                         </label>
                         @if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}" style="font-size:12.5px; color:#00A896; font-weight:600;">
-                                Forgot Key?
+                                Lupa Password?
                             </a>
                         @endif
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-bottom:16px;">
-                        Sign in to Dashboard
+                        Masuk ke Portal
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </button>
                 </form>
 
-                <div class="login-divider">OR CONNECT WITH</div>
+                <div class="login-divider">ATAU HUBUNGKAN DENGAN</div>
 
                 <button type="button" class="login-sso-btn">
                     <svg width="18" height="18" viewBox="0 0 18 18">
@@ -155,21 +163,11 @@
                 </button>
 
                 <p class="login-footer">
-                    New to the institution?
-                    <a href="#">Request Enrollment</a>
+                    Belum punya akun?
+                    <a href="#">Ajukan Pendaftaran</a>
                 </p>
             </div>
         </div>
     </div>
-
-    @push('scripts')
-    <script>
-        function selectIdentity(type) {
-            document.getElementById('btn-student').classList.toggle('selected', type === 'student');
-            document.getElementById('btn-lecturer').classList.toggle('selected', type === 'lecturer');
-            document.getElementById('identity-input').value = type;
-        }
-    </script>
-    @endpush
 @endsection
 
