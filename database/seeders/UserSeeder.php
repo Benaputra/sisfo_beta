@@ -55,7 +55,7 @@ class UserSeeder extends Seeder
         foreach ($mahasiswas as $mhs) {
             $user = User::create([
                 'name' => $mhs->nama,
-                'email' => "{$mhs->nim}@fpst.ac.id",
+                'email' => "{$mhs->nim}@fpst.upb.ac.id",
                 'password' => Hash::make('password'),
                 'nim' => $mhs->nim,
             ]);

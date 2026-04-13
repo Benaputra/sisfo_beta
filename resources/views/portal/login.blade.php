@@ -169,5 +169,22 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            function selectIdentity(role) {
+                // update hidden input
+                document.getElementById('identity-input').value = role;
+
+                // remove selected class semua tombol
+                document.querySelectorAll('.identity-option').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+
+                // tambahkan selected ke yang dipilih
+                document.getElementById('btn-' + role).classList.add('selected');
+            }
+        </script>
+    @endpush
 @endsection
 

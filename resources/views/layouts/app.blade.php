@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'The Fluid Scholar') }} — @yield('title', 'Dashboard')</title>
-    <meta name="description" content="Portal Akademik The Fluid Scholar">
+    <title>{{ config('app.name', 'SISFO FPST UPB') }} — @yield('title', 'Dashboard')</title>
+    <meta name="description" content="Portal Akademik SISFO FPST UPB">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
@@ -18,8 +18,8 @@
     <aside class="sidebar">
         {{-- Logo --}}
         <div class="sidebar-logo">
-            <div class="sidebar-logo-icon">FS</div>
-            <span>The Fluid Scholar</span>
+            <!-- <div class="sidebar-logo-icon">FPST</div> -->
+            <span>SISFO FPST UPB</span>
         </div>
 
         {{-- User Info --}}
@@ -129,7 +129,7 @@
 
         {{-- Topbar --}}
         <header class="topbar">
-            <span class="topbar-brand">The Fluid Scholar</span>
+            <span class="topbar-brand">SISFO FPST UPB</span>
 
             <nav class="topbar-nav">
                 @yield('topbar-nav')
