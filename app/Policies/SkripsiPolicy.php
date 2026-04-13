@@ -11,9 +11,17 @@ class SkripsiPolicy
 
     public function view(User $user, Skripsi $skripsi): bool {
         if ($user->hasAnyRole(['admin', 'staff', 'kaprodi'])) return true;
+
         if ($user->hasRole('dosen')) {
-            return $user->id === $skripsi->pembimbing1_id || $user->id === $skripsi->pembimbing2_id;
+            $dosenId = $user->dosen?->id;
+            return $dosenId && (
+                $dosenId === $skripsi->pembimbing1_id || 
+                $dosenId === $skripsi->pembimbing2_id || 
+                $dosenId === $skripsi->penguji1_id || 
+                $dosenId === $skripsi->penguji2_id
+            );
         }
+
         return $user->nim === $skripsi->nim;
     }
 

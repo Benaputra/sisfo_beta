@@ -11,9 +11,16 @@ class SeminarPolicy
 
     public function view(User $user, Seminar $seminar): bool {
         if ($user->hasAnyRole(['admin', 'staff', 'kaprodi'])) return true;
+        
         if ($user->hasRole('dosen')) {
-            return $user->id === $seminar->pembimbing1_id || $user->id === $seminar->pembimbing2_id;
+            $dosenId = $user->dosen?->id;
+            return $dosenId && (
+                $dosenId === $seminar->pembimbing1_id || 
+                $dosenId === $seminar->pembimbing2_id || 
+                $dosenId === $seminar->penguji_seminar_id
+            );
         }
+
         return $user->nim === $seminar->nim;
     }
 

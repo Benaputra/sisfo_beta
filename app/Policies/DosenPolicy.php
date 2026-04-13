@@ -13,7 +13,7 @@ class DosenPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->hasAnyRole(['admin', 'staff', 'kaprodi', 'dosen']);
     }
 
     /**
@@ -21,6 +21,12 @@ class DosenPolicy
      */
     public function view(User $user, Dosen $dosen): bool
     {
+        if ($user->hasAnyRole(['admin', 'staff', 'kaprodi'])) return true;
+
+        if ($user->hasRole('dosen')) {
+            return $user->dosen?->program_studi_id === $dosen->program_studi_id;
+        }
+
         return false;
     }
 

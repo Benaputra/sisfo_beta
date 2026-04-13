@@ -11,7 +11,11 @@ class PraktekLapangPolicy
 
     public function view(User $user, PraktekLapang $pl): bool {
         if ($user->hasAnyRole(['admin', 'staff', 'kaprodi'])) return true;
-        if ($user->hasRole('dosen')) return $user->id === $pl->dosen_pembimbing_id;
+
+        if ($user->hasRole('dosen')) {
+            return $user->dosen?->id === $pl->dosen_pembimbing_id;
+        }
+
         return $user->nim === $pl->nim;
     }
 

@@ -30,4 +30,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relasi ke data Dosen
+     */
+    public function dosen(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Dosen::class, 'nidn', 'nidn');
+    }
+
+    /**
+     * Relasi ke data Mahasiswa
+     */
+    public function mahasiswa(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Mahasiswa::class, 'nim', 'nim');
+    }
 }
