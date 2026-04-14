@@ -24,6 +24,7 @@ class Seminar extends Model
         'acc_seminar',
         'surat_undangan_id',
         'notifikasi_whatsapp',
+        'keterangan',
     ];
 
     protected $casts = [

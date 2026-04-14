@@ -151,6 +151,7 @@ class PortalController extends Controller
             'tanggal' => 'nullable|date',
             'tempat' => 'nullable|string',
             'acc_seminar' => 'required|in:Menunggu,Disetujui,Ditolak',
+            'keterangan' => 'nullable|string',
         ]);
 
         if ($request->hasFile('bukti_bayar')) {
@@ -175,6 +176,29 @@ class PortalController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
+    }
+
+    public function sendSeminarNotification(Request $request, $id, \App\Services\WhatsAppService $waService)
+    {
+        $seminar = Seminar::findOrFail($id);
+        $mahasiswa = $seminar->mahasiswa;
+        
+        if (!$mahasiswa || !$mahasiswa->no_hp) {
+            return response()->json(['success' => false, 'message' => 'Mahasiswa atau nomor HP tidak ditemukan.']);
+        }
+
+        $hour = now()->format('H');
+        $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
+        
+        $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . " (" . $seminar->nim . ") (" . ($mahasiswa->prodi->nama ?? '') . ") kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak. Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+
+        $success = $waService->send($mahasiswa->no_hp, $message);
+
+        if ($success) {
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Gagal mengirim pesan melalui Wablas.']);
     }
 
     public function skripsi()

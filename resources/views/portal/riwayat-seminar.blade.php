@@ -50,14 +50,14 @@
                 <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
             </select>
         </div>
-        <div class="card" style="padding: 16px; background: var(--bg-page);">
+        <!-- <div class="card" style="padding: 16px; background: var(--bg-page);">
             <div class="form-label" style="font-size: 9px; margin-bottom: 4px;">PERIODE SEMESTER</div>
             <select class="form-control form-select" style="padding: 6px 12px; border: none;">
                 <option>Ganjil 2023/2024</option>
                 <option>Genap 2022/2023</option>
                 <option>Ganjil 2022/2023</option>
             </select>
-        </div>
+        </div> -->
     </form>
 
     {{-- ── Main Table Card ── --}}
@@ -68,9 +68,11 @@
                     <tr style="background: var(--bg-page);">
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Identitas & Judul</th>
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Waktu & Tanggal</th>
-                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Dosen Pembimbing</th>
-                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Tim Penguji</th>
+                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Dosen (Pembimbing & Penguji)</th>
+                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Syarat</th>
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Status</th>
+                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Tanggal Pengajuan</th>
+                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Keterangan</th>
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border); text-align: right;">Aksi</th>
                     </tr>
                 </thead>
@@ -79,7 +81,7 @@
                         <tr style="transition: background 0.2s;">
                             <td style="padding: 16px 24px; max-width: 320px;">
                                 <div style="font-weight: 700; color: var(--text-primary);">{{ $seminar->mahasiswa->nama ?? 'N/A' }}</div>
-                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">{{ $seminar->nim }} • {{ $seminar->mahasiswa->prodi->nama ?? 'N/A' }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">{{ $seminar->nim }} • {{ $seminar->mahasiswa->prodi->nama ?? '' }}</div>
                                 <p style="font-size: 13px; font-weight: 600; color: var(--brand-dark); line-height: 1.4;">{{ $seminar->judul }}</p>
                             </td>
                             <td style="padding: 16px 24px;">
@@ -98,17 +100,32 @@
                                 @endif
                             </td>
                             <td style="padding: 16px 24px;">
-                                <div style="margin-bottom: 8px;">
-                                    <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 1</div>
-                                    <div style="font-size: 12px; font-weight: 600;">{{ $seminar->pembimbing1->nama ?? '-' }}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 2</div>
-                                    <div style="font-size: 12px; font-weight: 600;">{{ $seminar->pembimbing2->nama ?? '-' }}</div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div>
+                                        <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing</div>
+                                        <div style="font-size: 11px; font-weight: 600;">1. {{ $seminar->pembimbing1->nama ?? '-' }}</div>
+                                        @if($seminar->pembimbing2)
+                                            <div style="font-size: 11px; font-weight: 600;">2. {{ $seminar->pembimbing2->nama ?? '-' }}</div>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Tim Penguji</div>
+                                        <div style="font-size: 11px; font-weight: 600;">{{ $seminar->pengujiSeminar->nama ?? '-' }}</div>
+                                    </div>
                                 </div>
                             </td>
                             <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
-                                {{ $seminar->pengujiSeminar->nama ?? '-' }}
+                                @if($seminar->bukti_bayar)
+                                    <a href="{{ asset('storage/' . $seminar->bukti_bayar) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                                        Bukti Bayar tersedia
+                                    </a>
+                                @else
+                                    <span class="badge" style="background: #FEE2E2; color: #991B1B; display: inline-flex; align-items: center; gap: 4px;">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        Bukti Bayar belum tersedia
+                                    </span>
+                                @endif
                             </td>
                             <td style="padding: 16px 24px;">
                                 @if($seminar->acc_seminar == 'Disetujui')
@@ -128,9 +145,25 @@
                                     </span>
                                 @endif
                             </td>
+                            <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
+                                {{ $seminar->created_at->format('d M Y') }}
+                            </td>
+                            <td style="padding: 16px 24px; font-size: 12px; color: var(--text-secondary); max-width: 200px;">
+                                {{ $seminar->keterangan ?? '-' }}
+                            </td>
                             <td style="padding: 16px 24px; text-align: right;">
                                 <div style="display: flex; justify-content: flex-end; gap: 8px;">
                                     @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
+                                        {{-- WhatsApp Notification Popup Trigger --}}
+                                        @php
+                                            $hour = now()->format('H');
+                                            $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
+                                            $waMessage = "Selamat {$greeting} " . ($seminar->mahasiswa->nama ?? '') . " (" . $seminar->nim . ") (" . ($seminar->mahasiswa->prodi->nama ?? '') . ") kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak. Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+                                        @endphp
+                                        <button type="button" class="topbar-icon-btn" onclick="openWaModal({{ $seminar->id }}, '{{ $seminar->mahasiswa->no_hp ?? '' }}', '{{ addslashes($waMessage) }}')" title="Kirim Notifikasi WA (Wablas)" style="color: #25D366; border:none; background:none; cursor:pointer; display: flex; align-items: center; justify-content: center;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3.5l-1.5 5.5Z"></path></svg>
+                                        </button>
+
                                         <button type="button" class="topbar-icon-btn" onclick="editSeminar({{ $seminar->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                         </button>
@@ -228,19 +261,70 @@
                             @endforeach
                         </select>
                 </div>
+                <div class="form-row form-row-2" style="margin-bottom:24px;">
+                    <div class="form-group">
+                        <label class="form-label">Status Persetujuan</label>
+                        <select name="acc_seminar" id="edit_status" class="form-control form-select">
+                            <option value="Menunggu">Menunggu</option>
+                            <option value="Disetujui">Disetujui</option>
+                            <option value="Ditolak">Ditolak</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Update Bukti Bayar (PDF/JPG)</label>
+                        <input type="file" name="bukti_bayar" class="form-control">
+                        <div id="current_file_status" style="margin-top: 8px; font-size: 11px;"></div>
+                    </div>
+                </div>
                 <div class="form-group" style="margin-bottom:24px;">
-                    <label class="form-label">Status Persetujuan</label>
-                    <select name="acc_seminar" id="edit_status" class="form-control form-select">
-                        <option value="Menunggu">Menunggu</option>
-                        <option value="Disetujui">Disetujui</option>
-                        <option value="Ditolak">Ditolak</option>
-                    </select>
+                    <label class="form-label">Keterangan / Pesan untuk Mahasiswa</label>
+                    <textarea name="keterangan" id="edit_keterangan" class="form-control" rows="2" placeholder="Masukkan catatan atau pesan untuk mahasiswa..."></textarea>
                 </div>
                 <div style="display:flex; justify-content:flex-end; gap:12px;">
                     <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- WhatsApp Preview Modal --}}
+    <div id="waModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10001; align-items:center; justify-content:center;">
+        <div class="card" style="width:100%; max-width:500px; padding:32px; background:var(--bg-card); position: relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: #DCF8C6; color: #075E54; display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3.5l-1.5 5.5Z"></path></svg>
+                    </div>
+                    <div>
+                        <h2 style="font-size:16px; font-weight:700; margin: 0;">Pratinjau Pesan WA</h2>
+                        <p style="font-size: 11px; color: var(--text-muted); margin: 0;">Kirim otomatis via Wablas Gateway</p>
+                    </div>
+                </div>
+                <button onclick="closeWaModal()" style="border:none; background:none; cursor:pointer; font-size:24px; color: var(--text-muted);">&times;</button>
+            </div>
+            
+            <div style="background: var(--bg-body); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Nomor Tujuan</div>
+                <div id="wa_display_number" style="font-size: 14px; font-weight: 600; color: var(--brand); margin-bottom: 16px;"></div>
+                
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Isi Pesan</div>
+                <div id="wa_display_message" style="font-size: 13px; line-height: 1.6; color: var(--text-primary); background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;"></div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap: wrap;">
+                <button type="button" onclick="closeWaModal()" class="btn btn-secondary">Batal</button>
+                <div style="display: flex; gap: 8px;">
+                    <a id="btnManualWa" href="#" target="_blank" class="btn" style="background: #E5E7EB; color: #374151; border: none; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Kirim Manual
+                    </a>
+                    <button type="button" id="btnSendWa" class="btn btn-primary" style="background: #25D366; border: none; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+                        <span id="waBtnText">Kirim Otomatis</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -260,6 +344,14 @@
                 document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
                 document.getElementById('edit_tempat').value = data.tempat || '';
                 document.getElementById('edit_status').value = data.acc_seminar;
+                document.getElementById('edit_keterangan').value = data.keterangan || '';
+                
+                const fileStatus = document.getElementById('current_file_status');
+                if (data.bukti_bayar) {
+                    fileStatus.innerHTML = `<span style="color: #059669;">✔ Bukti bayar tersedia.</span> <a href="/storage/${data.bukti_bayar}" target="_blank" style="color: var(--brand); text-decoration: underline;">Lihat file</a>`;
+                } else {
+                    fileStatus.innerHTML = `<span style="color: #DC2626;">✘ Bukti bayar belum diupload.</span>`;
+                }
                 
                 document.getElementById('editModal').style.display = 'flex';
             });
@@ -267,6 +359,65 @@
 
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
+    }
+
+    // WhatsApp Notification Functions
+    let currentSeminarIdForWa = null;
+
+    function openWaModal(id, phoneNumber, message) {
+        currentSeminarIdForWa = id;
+        document.getElementById('wa_display_number').innerText = phoneNumber || 'Nomor tidak tersedia';
+        document.getElementById('wa_display_message').innerText = message;
+        
+        // Setup direct link for manual fallback
+        const cleanNumber = (phoneNumber || '').replace(/\D/g, '');
+        const waLink = `https://wa.me/${cleanNumber.startsWith('0') ? '62'+cleanNumber.substring(1) : cleanNumber}?text=${encodeURIComponent(message)}`;
+        document.getElementById('btnManualWa').href = waLink;
+        
+        const btnSend = document.getElementById('btnSendWa');
+        btnSend.onclick = () => sendWaNotification(id);
+        
+        document.getElementById('waModal').style.display = 'flex';
+    }
+
+    function closeWaModal() {
+        document.getElementById('waModal').style.display = 'none';
+        document.getElementById('waBtnText').innerText = 'Kirim Otomatis';
+        document.getElementById('btnSendWa').disabled = false;
+    }
+
+    function sendWaNotification(id) {
+        const btn = document.getElementById('btnSendWa');
+        const btnText = document.getElementById('waBtnText');
+        
+        btn.disabled = true;
+        btnText.innerText = 'Mengirim...';
+
+        fetch(`/portal/seminar/${id}/notify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRquire': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Pesan berhasil dikirim via Wablas!');
+                closeWaModal();
+            } else {
+                alert('Gagal: ' + (data.message || 'Terjadi kesalahan sistem.'));
+                btn.disabled = false;
+                btnText.innerText = 'Kirim Sekarang';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan koneksi.');
+            btn.disabled = false;
+            btnText.innerText = 'Kirim Sekarang';
+        });
     }
 </script>
 @endpush
