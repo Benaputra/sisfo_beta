@@ -68,67 +68,86 @@
                 </div>
             </div>
 
+            {{-- Research Topic (Judul) - Added here for Students to balance the layout --}}
+            @if(!$isStaff)
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <div class="section-label">Research Topic</div>
+                    </div>
+                    <div class="form-section-body">
+                        <div class="form-group">
+                            <label class="form-label">Thesis Title</label>
+                            <textarea name="judul" class="form-control" rows="4" placeholder="Enter your full research title here..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Scheduling --}}
-            <div class="form-section">
-                <div class="form-section-header">
-                    <div class="section-label">Scheduling</div>
+            @if($isStaff)
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <div class="section-label">Scheduling</div>
+                    </div>
+                    <div class="form-section-body">
+                        <div class="form-row form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Date</label>
+                                <input type="date" name="tanggal" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Location / Room</label>
+                                <input type="text" name="tempat" class="form-control" placeholder="e.g. Ruang Rapat Lt. 1">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-section-body">
-                    <div class="form-row form-row-2">
+                
+                {{-- Advisors --}}
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <div class="section-label">Advisors</div>
+                    </div>
+                    <div class="form-section-body">
                         <div class="form-group">
-                            <label class="form-label">Date</label>
-                            <input type="date" name="tanggal" class="form-control">
+                            <label class="form-label">Pembimbing 1</label>
+                            <select name="pembimbing1_id" class="form-control form-select" required>
+                                <option value="">Pilih Dosen</option>
+                                @foreach($dosens as $dosen)
+                                    <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Location / Room</label>
-                            <input type="text" name="tempat" class="form-control" placeholder="e.g. Ruang Rapat Lt. 1">
+                            <label class="form-label">Pembimbing 2</label>
+                            <select name="pembimbing2_id" class="form-control form-select">
+                                <option value="">Pilih Dosen (Opsional)</option>
+                                @foreach($dosens as $dosen)
+                                    <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            {{-- Advisors --}}
-            <div class="form-section">
-                <div class="form-section-header">
-                    <div class="section-label">Advisors</div>
-                </div>
-                <div class="form-section-body">
-                    <div class="form-group">
-                        <label class="form-label">Pembimbing 1</label>
-                        <select name="pembimbing1_id" class="form-control form-select" required>
-                            <option value="">Pilih Dosen</option>
-                            @foreach($dosens as $dosen)
-                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pembimbing 2</label>
-                        <select name="pembimbing2_id" class="form-control form-select">
-                            <option value="">Pilih Dosen (Opsional)</option>
-                            @foreach($dosens as $dosen)
-                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
+            @endif
         </div>
 
         {{-- Right Col --}}
         <div class="flex flex-col gap-24">
-            {{-- Research Topic --}}
-            <div class="form-section">
-                <div class="form-section-header">
-                    <div class="section-label">Research Topic</div>
-                </div>
-                <div class="form-section-body">
-                    <div class="form-group">
-                        <label class="form-label">Thesis Title</label>
-                        <textarea name="judul" class="form-control" rows="4" placeholder="Enter your full research title here..." required></textarea>
+            {{-- Research Topic - Visible only for Staff here --}}
+            @if($isStaff)
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <div class="section-label">Research Topic</div>
+                    </div>
+                    <div class="form-section-body">
+                        <div class="form-group">
+                            <label class="form-label">Thesis Title</label>
+                            <textarea name="judul" class="form-control" rows="4" placeholder="Enter your full research title here..." required></textarea>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
 
             {{-- Required Documents --}}
             <div class="form-section">

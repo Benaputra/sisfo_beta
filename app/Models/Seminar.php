@@ -49,11 +49,16 @@ class Seminar extends Model
     }
 
     /**
-     * Cek kelengkapan file untuk generate surat
+     * Cek kelengkapan data untuk generate surat undangan seminar
+     * Syarat: Pembimbing 1 & 2, Penguji, Bukti Bayar, dan Status Disetujui.
      */
     public function canGenerateSurat(): bool
     {
-        return !empty($this->acc_seminar) && !empty($this->bukti_bayar);
+        return $this->acc_seminar === 'Disetujui' 
+            && !empty($this->bukti_bayar)
+            && !empty($this->pembimbing1_id)
+            && !empty($this->pembimbing2_id)
+            && !empty($this->penguji_seminar_id);
     }
 
     // --- Relasi Dosen ---

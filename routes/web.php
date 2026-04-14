@@ -23,6 +23,7 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::get('/seminar/{id}/edit', [PortalController::class, 'editSeminar'])->name('seminar.edit');
     Route::put('/seminar/{id}', [PortalController::class, 'updateSeminar'])->name('seminar.update');
     Route::delete('/seminar/{id}', [PortalController::class, 'destroySeminar'])->name('seminar.destroy');
+    Route::get('/seminar/{id}/undangan', [PortalController::class, 'downloadUndanganSeminar'])->name('seminar.undangan');
     Route::post('/seminar/{id}/notify', [PortalController::class, 'sendSeminarNotification'])->name('seminar.notify');
 
     // Skripsi

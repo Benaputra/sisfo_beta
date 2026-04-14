@@ -108,7 +108,7 @@ class PortalController extends Controller
         $validated = $request->validate([
             'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
             'judul' => 'required|string',
-            'pembimbing1_id' => 'required|exists:dosen,id',
+            'pembimbing1_id' => $isStaff ? 'required|exists:dosen,id' : 'nullable|exists:dosen,id',
             'pembimbing2_id' => 'nullable|exists:dosen,id',
             'tanggal' => 'nullable|date',
             'tempat' => 'nullable|string',
@@ -199,6 +199,44 @@ class PortalController extends Controller
         }
 
         return response()->json(['success' => false, 'message' => 'Gagal mengirim pesan melalui Wablas.']);
+    }
+
+    public function downloadUndanganSeminar($id)
+    {
+        $seminar = Seminar::findOrFail($id);
+        
+        if (!$seminar->canGenerateSurat()) {
+            return back()->with('error', 'Surat belum dapat diunduh. Pastikan Pembimbing, Penguji, Bukti Bayar dan Status sudah lengkap.');
+        }
+
+        $mahasiswa = $seminar->mahasiswa;
+        $prodi = $mahasiswa->programStudi;
+        
+        // Find existing or create placeholder Surat record
+        $surat = $seminar->suratUndangan;
+        if (!$surat) {
+            $surat = \App\Models\Surat::create([
+                'jenis_surat' => 'Undangan Seminar',
+                'no_surat' => 'UN1/FP/STUDI-' . rand(100, 999) . '/2026',
+                'tujuan_surat' => $mahasiswa->nama,
+            ]);
+            $seminar->update(['surat_undangan_id' => $surat->id]);
+        }
+
+        $data = [
+            'seminar' => $seminar,
+            'mahasiswa' => $mahasiswa,
+            'surat' => $surat,
+            'with_signature' => true,
+            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-undangan-seminar', $data);
+        $filename = 'surat_undangan_' . $seminar->nim . '.pdf';
+        
+        return $pdf->stream($filename);
     }
 
     public function skripsi()

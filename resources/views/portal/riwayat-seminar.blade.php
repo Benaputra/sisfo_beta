@@ -66,6 +66,7 @@
             <table class="w-full text-left" style="border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--bg-page);">
+                        <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">No</th>
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Identitas & Judul</th>
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Waktu & Tanggal</th>
                         <th style="padding: 16px 24px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); border-bottom: 1px solid var(--border);">Dosen (Pembimbing & Penguji)</th>
@@ -79,6 +80,9 @@
                 <tbody class="divide-y divide-outline-variant/10">
                     @forelse ($seminars as $seminar)
                         <tr style="transition: background 0.2s;">
+                            <td style="padding: 16px 24px; max-width: 320px;">
+                                <div style="font-weight: 700; color: var(--text-primary);">{{ $loop->iteration }}</div>
+                            </td>   
                             <td style="padding: 16px 24px; max-width: 320px;">
                                 <div style="font-weight: 700; color: var(--text-primary);">{{ $seminar->mahasiswa->nama ?? 'N/A' }}</div>
                                 <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">{{ $seminar->nim }} • {{ $seminar->mahasiswa->prodi->nama ?? '' }}</div>
@@ -103,27 +107,35 @@
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <div>
                                         <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing</div>
-                                        <div style="font-size: 11px; font-weight: 600;">1. {{ $seminar->pembimbing1->nama ?? '-' }}</div>
+                                        @if($seminar->pembimbing1)
+                                            <div style="font-size: 11px; font-weight: 600;">1. {{ $seminar->pembimbing1->nama ?? '-' }}</div>    
+                                            @else
+                                            <div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Menunggu Pembimbing</div>
+                                        @endif
                                         @if($seminar->pembimbing2)
                                             <div style="font-size: 11px; font-weight: 600;">2. {{ $seminar->pembimbing2->nama ?? '-' }}</div>
+                                            @else
+                                            <div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Menunggu Pembimbing</div>
                                         @endif
                                     </div>
                                     <div>
                                         <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Tim Penguji</div>
-                                        <div style="font-size: 11px; font-weight: 600;">{{ $seminar->pengujiSeminar->nama ?? '-' }}</div>
+                                        @if($seminar->pengujiSeminar)
+                                            <div style="font-size: 11px; font-weight: 600;">{{ $seminar->pengujiSeminar->nama ?? '-' }}</div>
+                                            @else
+                                            <div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Menunggu Penguji</div>
+                                        @endif
                                     </div>
                                 </div>
                             </td>
                             <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
                                 @if($seminar->bukti_bayar)
-                                    <a href="{{ asset('storage/' . $seminar->bukti_bayar) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-                                        Bukti Bayar tersedia
+                                    <a href="{{ asset('storage/' . $seminar->bukti_bayar) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700;">
+                                        Bukti Bayar
                                     </a>
                                 @else
-                                    <span class="badge" style="background: #FEE2E2; color: #991B1B; display: inline-flex; align-items: center; gap: 4px;">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                        Bukti Bayar belum tersedia
+                                    <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700;">
+                                        Bukti Bayar
                                     </span>
                                 @endif
                             </td>
@@ -152,28 +164,36 @@
                                 {{ $seminar->keterangan ?? '-' }}
                             </td>
                             <td style="padding: 16px 24px; text-align: right;">
-                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                    @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
-                                        {{-- WhatsApp Notification Popup Trigger --}}
-                                        @php
-                                            $hour = now()->format('H');
-                                            $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
-                                            $waMessage = "Selamat {$greeting} " . ($seminar->mahasiswa->nama ?? '') . " (" . $seminar->nim . ") (" . ($seminar->mahasiswa->prodi->nama ?? '') . ") kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak. Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
-                                        @endphp
-                                        <button type="button" class="topbar-icon-btn" onclick="openWaModal({{ $seminar->id }}, '{{ $seminar->mahasiswa->no_hp ?? '' }}', '{{ addslashes($waMessage) }}')" title="Kirim Notifikasi WA (Wablas)" style="color: #25D366; border:none; background:none; cursor:pointer; display: flex; align-items: center; justify-content: center;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3.5l-1.5 5.5Z"></path></svg>
-                                        </button>
-
-                                        <button type="button" class="topbar-icon-btn" onclick="editSeminar({{ $seminar->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                        </button>
-                                        <form action="{{ route('portal.seminar.destroy', $seminar->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer;">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                                    <div style="display: flex; gap: 8px;">
+                                        @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
+                                            {{-- WhatsApp Notification Popup Trigger --}}
+                                            @php
+                                                $hour = now()->format('H');
+                                                $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
+                                                $waMessage = "Selamat {$greeting} " . ($seminar->mahasiswa->nama ?? '') . " (" . $seminar->nim . ") (" . ($seminar->mahasiswa->prodi->nama ?? '') . ") kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak. Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+                                            @endphp
+                                            <button type="button" class="topbar-icon-btn" onclick="openWaModal({{ $seminar->id }}, '{{ $seminar->mahasiswa->no_hp ?? '' }}', '{{ addslashes($waMessage) }}')" title="Kirim Notifikasi WA (Wablas)" style="color: #25D366; border:none; background:none; cursor:pointer; display: flex; align-items: center; justify-content: center;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3.5l-1.5 5.5Z"></path></svg>
                                             </button>
-                                        </form>
+
+                                            <button type="button" class="topbar-icon-btn" onclick="editSeminar({{ $seminar->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                            <form action="{{ route('portal.seminar.destroy', $seminar->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+
+                                    @if($seminar->canGenerateSurat())
+                                        <a href="{{ route('portal.seminar.undangan', $seminar->id) }}" target="_blank" class="badge" style="background: #6366F1; color: #fff; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; text-transform: uppercase; white-space: nowrap;">
+                                            Surat Undangan
+                                        </a>
                                     @endif
                                 </div>
                             </td>
