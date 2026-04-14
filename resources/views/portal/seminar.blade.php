@@ -35,7 +35,8 @@
     </div>
 
     {{-- ── Form Grid ── --}}
-    <form style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
+    <form action="{{ route('portal.seminar.store') }}" method="POST" enctype="multipart/form-data" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px;">
+        @csrf
         {{-- Left Col --}}
         <div class="flex flex-col gap-24">
             {{-- Primary Details --}}
@@ -44,18 +45,26 @@
                     <div class="section-label">Primary Details</div>
                 </div>
                 <div class="form-section-body">
-                    <div class="form-group">
-                        <label class="form-label">Seminar ID</label>
-                        <input type="text" class="form-control" value="SEM-2023-001" readonly style="background: var(--bg-page); color: var(--text-muted);">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Student Full Name</label>
-                        <input type="text" class="form-control" value="Budi Santoso" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Student ID (NIM)</label>
-                        <input type="text" class="form-control" value="G64180001" readonly>
-                    </div>
+                    @if($isStaff)
+                        <div class="form-group">
+                            <label class="form-label">Pilih Mahasiswa</label>
+                            <select name="nim" class="form-control form-select" required>
+                                <option value="">-- Pilih Mahasiswa --</option>
+                                @foreach($mahasiswas as $m)
+                                    <option value="{{ $m->nim }}">{{ $m->nim }} - {{ $m->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <div class="form-group">
+                            <label class="form-label">Student Full Name</label>
+                            <input type="text" class="form-control" value="{{ $mahasiswa->nama }}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Student ID (NIM)</label>
+                            <input type="text" class="form-control" name="nim" value="{{ $mahasiswa->nim }}" readonly>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -68,19 +77,38 @@
                     <div class="form-row form-row-2">
                         <div class="form-group">
                             <label class="form-label">Date</label>
-                            <input type="date" class="form-control">
+                            <input type="date" name="tanggal" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Time</label>
-                            <input type="time" class="form-control">
+                            <label class="form-label">Location / Room</label>
+                            <input type="text" name="tempat" class="form-control" placeholder="e.g. Ruang Rapat Lt. 1">
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            {{-- Advisors --}}
+            <div class="form-section">
+                <div class="form-section-header">
+                    <div class="section-label">Advisors</div>
+                </div>
+                <div class="form-section-body">
                     <div class="form-group">
-                        <label class="form-label">Location / Room</label>
-                        <select class="form-control form-select">
-                            <option>Main Hall A-101</option>
-                            <option>Seminar Room B-202</option>
-                            <option>Virtual Room (Zoom)</option>
+                        <label class="form-label">Pembimbing 1</label>
+                        <select name="pembimbing1_id" class="form-control form-select" required>
+                            <option value="">Pilih Dosen</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 2</label>
+                        <select name="pembimbing2_id" class="form-control form-select">
+                            <option value="">Pilih Dosen (Opsional)</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -97,7 +125,7 @@
                 <div class="form-section-body">
                     <div class="form-group">
                         <label class="form-label">Thesis Title</label>
-                        <textarea class="form-control" rows="4" placeholder="Enter your full research title here..."></textarea>
+                        <textarea name="judul" class="form-control" rows="4" placeholder="Enter your full research title here..." required></textarea>
                     </div>
                 </div>
             </div>
@@ -108,26 +136,10 @@
                     <div class="section-label">Required Documents</div>
                 </div>
                 <div class="form-section-body">
-                    <div class="doc-upload-grid">
-                        <div class="doc-card">
-                            <div class="doc-card-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                </svg>
-                            </div>
-                            <div class="doc-card-label">Proof of Payment</div>
-                            <div class="doc-card-hint">PDF, JPG up to 5MB</div>
-                        </div>
-                        <div class="doc-card" style="border-color: var(--brand); background: var(--brand-light);">
-                            <div class="doc-card-icon" style="background: var(--brand); color: #fff;">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </div>
-                            <div class="doc-card-label">Supervisor ACC Letter</div>
-                            <div class="doc-card-hint">Signed PDF document</div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Bukti Bayar (PDF/JPG)</label>
+                        <input type="file" name="bukti_bayar" class="form-control">
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Max size 5MB</p>
                     </div>
                 </div>
             </div>
@@ -143,7 +155,6 @@
                     <div class="submission-bar-title">Final Submission</div>
                     <div class="submission-bar-desc">Please verify all information before submitting to the department.</div>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" style="color: #fff; border-color: rgba(255,255,255,0.2);">Save Draft</button>
                 <button type="submit" class="btn btn-primary btn-sm">Complete Registration</button>
             </div>
         </div>

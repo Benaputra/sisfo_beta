@@ -36,7 +36,7 @@
     </div>
 
     {{-- ── Filter Section ── --}}
-    <div class="grid-4" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+    <form action="{{ route('portal.riwayatSkripsi') }}" method="GET" class="grid-4" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
         <div class="card" style="padding: 24px; background: var(--bg-page);">
             <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">CARI JUDUL ATAU MAHASISWA</label>
             <div class="topbar-search" style="width: 100%; background: #fff; flex: 1; border: 1px solid var(--border-light);">
@@ -44,24 +44,24 @@
                     <circle cx="6" cy="6" r="4.5" stroke="#9CA3AF" stroke-width="1.5"/>
                     <path d="M10 10l2.5 2.5" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                <input type="text" placeholder="Masukkan kata kunci..." style="border: none; background: transparent; outline: none; width: 100%; font-size: 13px;">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Masukkan kata kunci..." style="border: none; background: transparent; outline: none; width: 100%; font-size: 13px;">
             </div>
         </div>
         <div class="card" style="padding: 24px; background: var(--bg-page);">
             <label style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">STATUS PENGAJUAN</label>
-            <select class="form-control form-select" style="padding: 10px 14px; border: none; background: #fff;">
-                <option>Semua Status</option>
-                <option>Disetujui</option>
-                <option>Dalam Proses</option>
-                <option>Ditolak</option>
+            <select name="status" class="form-control form-select" style="padding: 10px 14px; border: none; background: #fff;">
+                <option value="">Semua Status</option>
+                <option value="Disetujui" {{ request('status') == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
+                <option value="Proses" {{ request('status') == 'Proses' ? 'selected' : '' }}>Dalam Proses</option>
+                <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
             </select>
         </div>
         <div class="card" style="padding: 24px; background: var(--bg-page); display: flex; align-items: flex-end;">
-            <button class="btn btn-secondary btn-full" style="background: var(--bg-sidebar); color: #fff; border: none; padding: 12px;">
+            <button type="submit" class="btn btn-secondary btn-full" style="background: var(--bg-sidebar); color: #fff; border: none; padding: 12px;">
                 Terapkan Filter
             </button>
         </div>
-    </div>
+    </form>
 
     {{-- ── Table section ── --}}
     <div class="card" style="overflow: hidden;">
@@ -78,119 +78,198 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-outline-variant/10">
-                    {{-- Row 1 --}}
-                    <tr style="transition: background 0.2s;">
-                        <td style="padding: 24px;">
-                            <div style="font-weight: 700; color: var(--text-primary);">Arya Wiguna</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">1902441012</div>
-                            <div style="margin-top: 4px; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase;">TEKNIK INFORMATIKA</div>
-                        </td>
-                        <td style="padding: 24px; max-width: 300px;">
-                            <p style="font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.6; font-style: italic;">
-                                "Implementasi Algoritma Random Forest pada Analisis Sentimen Mahasiswa terhadap Portal Akademik Berbasis Web"
-                            </p>
-                        </td>
-                        <td style="padding: 24px;">
-                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <div style="display: flex; items-center; gap: 6px; font-size: 12px; font-weight: 600;">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand);">
-                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                                    </svg>
-                                    24 Okt 2023
+                    @forelse ($skripsis as $skripsi)
+                        <tr style="transition: background 0.2s;">
+                            <td style="padding: 24px;">
+                                <div style="font-weight: 700; color: var(--text-primary);">{{ $skripsi->mahasiswa->nama ?? 'N/A' }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ $skripsi->nim }}</div>
+                                <div style="margin-top: 4px; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase;">{{ $skripsi->mahasiswa->prodi->nama ?? 'N/A' }}</div>
+                            </td>
+                            <td style="padding: 24px; max-width: 300px;">
+                                <p style="font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.6; font-style: italic;">
+                                    "{{ $skripsi->judul }}"
+                                </p>
+                            </td>
+                            <td style="padding: 24px;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    @if($skripsi->tanggal)
+                                        <div style="display: flex; items-center; gap: 6px; font-size: 12px; font-weight: 600;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand);">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                            {{ $skripsi->tanggal->format('d M Y') }}
+                                        </div>
+                                        <div style="display: flex; items-center; gap: 6px; font-size: 12px; color: var(--text-muted);">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                            {{ $skripsi->waktu ?? '09:00' }} WIB
+                                        </div>
+                                    @else
+                                        <div style="font-size: 11px; color: var(--text-muted); font-style: italic;">Belum Dijadwalkan</div>
+                                    @endif
                                 </div>
-                                <div style="display: flex; items-center; gap: 6px; font-size: 12px; color: var(--text-muted);">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                    </svg>
-                                    09:00 WIB
+                            </td>
+                            <td style="padding: 24px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand-light); color: var(--brand-dark); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">P1</div>
+                                        <span style="font-size: 12px; font-weight: 600;">{{ $skripsi->pembimbing1->nama ?? '-' }}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand-light); color: var(--brand-dark); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">P2</div>
+                                        <span style="font-size: 12px; font-weight: 600;">{{ $skripsi->pembimbing2->nama ?? '-' }}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td style="padding: 24px;">
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand-light); color: var(--brand-dark); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">P1</div>
-                                    <span style="font-size: 12px; font-weight: 600;">Dr. Indah Purnamasari</span>
+                            </td>
+                            <td style="padding: 24px;">
+                                @php
+                                    $skripsi_status = 'Menunggu'; // Minimal default
+                                    if(!empty($skripsi->toefl) && !empty($skripsi->bukti_bayar)) $skripsi_status = 'Disetujui';
+                                @endphp
+                                @if($skripsi_status == 'Disetujui')
+                                    <span class="badge badge-green" style="padding: 4px 12px;">DISETUJUI</span>
+                                @else
+                                    <span class="badge" style="background: #FFFBEB; color: #92400E; padding: 4px 12px;">MENUNGGU</span>
+                                @endif
+                            </td>
+                            <td style="padding: 24px; text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                    @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
+                                        <button type="button" class="topbar-icon-btn" onclick="editSkripsi({{ $skripsi->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                        <form action="{{ route('portal.skripsi.destroy', $skripsi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand-light); color: var(--brand-dark); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">P2</div>
-                                    <span style="font-size: 12px; font-weight: 600;">Budi Santoso, M.Kom</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td style="padding: 24px;">
-                            <span class="badge badge-green" style="padding: 4px 12px;">DISETUJUI</span>
-                        </td>
-                        <td style="padding: 24px; text-align: right;">
-                            <button class="btn btn-primary btn-sm" style="background: var(--brand); border-radius: 8px; font-size: 11px; padding: 8px 16px; gap: 6px;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Undangan
-                            </button>
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="padding: 48px; text-align: center; color: var(--text-muted);">
+                                Tidak ada data skripsi ditemukan
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
         {{-- Pagination --}}
         <div style="padding: 24px; background: #fff; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between;">
-            <p style="font-size: 12px; color: var(--text-muted);">Menampilkan <strong>3</strong> dari <strong>48</strong> data skripsi</p>
-            <div style="display: flex; gap: 8px;">
-                <button class="topbar-icon-btn" disabled><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12l-4-4 4-4" stroke="currentColor" stroke-width="1.5"/></svg></button>
-                <button class="btn btn-primary" style="width: 36px; height: 36px; padding: 0;">1</button>
-                <button class="btn btn-secondary" style="width: 36px; height: 36px; padding: 0; border: none;">2</button>
-                <button class="topbar-icon-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="1.5"/></svg></button>
+            <p style="font-size: 12px; color: var(--text-muted);">
+                Menampilkan <strong>{{ $skripsis->firstItem() ?? 0 }}</strong> sampai <strong>{{ $skripsis->lastItem() ?? 0 }}</strong> dari <strong>{{ $skripsis->total() }}</strong> data skripsi
+            </p>
+            <div class="pagination-links">
+                {{ $skripsis->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
 
-    {{-- ── Help boxes ── --}}
-    <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
-        <div style="padding: 24px; border-radius: var(--radius-lg); background: rgba(2, 195, 154, 0.05); border-left: 4px solid var(--brand);">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand);">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary);">Informasi Penting</h3>
+    {{-- Edit Modal --}}
+    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
+        <div class="card" style="width:100%; max-width:600px; padding:32px; background:#fff;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="font-size:18px; font-weight:700;">Edit Data Skripsi</h2>
+                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
             </div>
-            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                Undangan skripsi hanya dapat diunduh 3 hari sebelum jadwal sidang berlangsung dan status sudah dinyatakan <strong style="color: var(--brand);">Disetujui</strong>.
-            </p>
-        </div>
-        <div style="padding: 24px; border-radius: var(--radius-lg); background: rgba(3, 101, 140, 0.05); border-left: 4px solid var(--accent);">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                </svg>
-                <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary);">Butuh Bantuan?</h3>
-            </div>
-            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                Jika terdapat ketidaksesuaian data pembimbing atau penguji, silakan hubungi bagian Sekretariat Jurusan melalui portal helpdesk.
-            </p>
-        </div>
-        <div style="padding: 24px; border-radius: var(--radius-lg); background: rgba(0, 104, 118, 0.05); border-left: 4px solid #006876;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #006876;">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-                <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary);">Revisi & Final</h3>
-            </div>
-            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-                Pastikan judul yang tercetak di undangan adalah judul terbaru yang telah disetujui oleh dosen pembimbing Anda.
-            </p>
+            <form id="editForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Judul Skripsi</label>
+                    <textarea name="judul" id="edit_judul" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:16px;">
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 1</label>
+                        <select name="pembimbing1_id" id="edit_pembimbing1" class="form-control" required>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 2</label>
+                        <select name="pembimbing2_id" id="edit_pembimbing2" class="form-control">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:16px;">
+                    <div class="form-group">
+                        <label class="form-label">Penguji 1</label>
+                        <select name="penguji1_id" id="edit_penguji1" class="form-control">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Penguji 2</label>
+                        <select name="penguji2_id" id="edit_penguji2" class="form-control">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:16px;">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Sidang</label>
+                        <input type="date" name="tanggal" id="edit_tanggal" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tempat</label>
+                        <input type="text" name="tempat" id="edit_tempat" class="form-control">
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function editSkripsi(id) {
+        fetch(`/portal/skripsi/${id}/edit`)
+            .then(response => response.json())
+            .then(data => {
+                const form = document.getElementById('editForm');
+                form.action = `/portal/skripsi/${id}`;
+                document.getElementById('edit_judul').value = data.judul;
+                document.getElementById('edit_pembimbing1').value = data.pembimbing1_id;
+                document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
+                document.getElementById('edit_penguji1').value = data.penguji1_id || '';
+                document.getElementById('edit_penguji2').value = data.penguji2_id || '';
+                document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
+                document.getElementById('edit_tempat').value = data.tempat || '';
+                
+                document.getElementById('editModal').style.display = 'flex';
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+</script>
+@endpush
 @endsection

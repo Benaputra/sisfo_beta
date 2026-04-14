@@ -15,10 +15,31 @@ Route::post('/portal/logout', [PortalController::class, 'logout'])->name('portal
 Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function () {
     Route::get('/dashboard', [PortalController::class, 'dashboard'])->name('dashboard');
     Route::get('/mahasiswa', [PortalController::class, 'mahasiswa'])->name('mahasiswa');
+    
+    // Seminar
     Route::get('/seminar', [PortalController::class, 'seminar'])->name('seminar');
-    Route::get('/skripsi', [PortalController::class, 'skripsi'])->name('skripsi');
-    Route::get('/praktek-lapang', [PortalController::class, 'praktekLapang'])->name('praktekLapang');
+    Route::post('/seminar', [PortalController::class, 'storeSeminar'])->name('seminar.store');
     Route::get('/riwayat-seminar', [PortalController::class, 'riwayatSeminar'])->name('riwayatSeminar');
+    Route::get('/seminar/{id}/edit', [PortalController::class, 'editSeminar'])->name('seminar.edit');
+    Route::put('/seminar/{id}', [PortalController::class, 'updateSeminar'])->name('seminar.update');
+    Route::delete('/seminar/{id}', [PortalController::class, 'destroySeminar'])->name('seminar.destroy');
+
+    // Skripsi
+    Route::get('/skripsi', [PortalController::class, 'skripsi'])->name('skripsi');
+    Route::post('/skripsi', [PortalController::class, 'storeSkripsi'])->name('skripsi.store');
     Route::get('/riwayat-skripsi', [PortalController::class, 'riwayatSkripsi'])->name('riwayatSkripsi');
+    Route::get('/skripsi/{id}/edit', [PortalController::class, 'editSkripsi'])->name('skripsi.edit');
+    Route::put('/skripsi/{id}', [PortalController::class, 'updateSkripsi'])->name('skripsi.update');
+    Route::delete('/skripsi/{id}', [PortalController::class, 'destroySkripsi'])->name('skripsi.destroy');
+
+    // Praktek Lapang
+    Route::get('/praktek-lapang', [PortalController::class, 'praktekLapang'])->name('praktekLapang');
+    Route::post('/praktek-lapang', [PortalController::class, 'storePraktekLapang'])->name('praktekLapang.store');
     Route::get('/riwayat-praktek-lapang', [PortalController::class, 'riwayatPraktekLapang'])->name('riwayatPraktekLapang');
+    Route::get('/praktek-lapang/{id}/edit', [PortalController::class, 'editPraktekLapang'])->name('praktekLapang.edit');
+    Route::put('/praktek-lapang/{id}', [PortalController::class, 'updatePraktekLapang'])->name('praktekLapang.update');
+    Route::delete('/praktek-lapang/{id}', [PortalController::class, 'destroyPraktekLapang'])->name('praktekLapang.destroy');
+    
+    // Theme
+    Route::post('/update-theme', [PortalController::class, 'updateTheme'])->name('updateTheme');
 });

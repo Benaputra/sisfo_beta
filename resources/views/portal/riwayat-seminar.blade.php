@@ -30,24 +30,24 @@
     </div>
 
     {{-- ── Filter & Search Section ── --}}
-    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+    <form action="{{ route('portal.riwayatSeminar') }}" method="GET" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; margin-bottom: 24px;">
         <div class="card" style="padding: 16px; display: flex; align-items: center; gap: 12px; background: var(--bg-page);">
             <div class="topbar-search" style="width: 100%; background: #fff; flex: 1;">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <circle cx="6" cy="6" r="4.5" stroke="#9CA3AF" stroke-width="1.5"/>
                     <path d="M10 10l2.5 2.5" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
-                <input type="text" placeholder="Cari judul seminar atau nama pembimbing..." style="border: none; background: transparent; outline: none; width: 100%; font-size: 13px;">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul seminar atau nama pembimbing..." style="border: none; background: transparent; outline: none; width: 100%; font-size: 13px;">
             </div>
-            <button class="btn btn-primary btn-sm" style="padding: 10px 24px;">Cari</button>
+            <button type="submit" class="btn btn-primary btn-sm" style="padding: 10px 24px;">Cari</button>
         </div>
         <div class="card" style="padding: 16px; background: var(--bg-page);">
             <div class="form-label" style="font-size: 9px; margin-bottom: 4px;">STATUS PENGAJUAN</div>
-            <select class="form-control form-select" style="padding: 6px 12px; border: none;">
-                <option>Semua Status</option>
-                <option>Disetujui</option>
-                <option>Menunggu</option>
-                <option>Ditolak</option>
+            <select name="status" class="form-control form-select" style="padding: 6px 12px; border: none;" onchange="this.form.submit()">
+                <option value="">Semua Status</option>
+                <option value="Disetujui" {{ request('status') == 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
+                <option value="Menunggu" {{ request('status') == 'Menunggu' ? 'selected' : '' }}>Menunggu</option>
+                <option value="Ditolak" {{ request('status') == 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
             </select>
         </div>
         <div class="card" style="padding: 16px; background: var(--bg-page);">
@@ -58,7 +58,7 @@
                 <option>Ganjil 2022/2023</option>
             </select>
         </div>
-    </div>
+    </form>
 
     {{-- ── Main Table Card ── --}}
     <div class="card" style="overflow: hidden;">
@@ -75,165 +75,199 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-outline-variant/10">
-                    {{-- Row 1: Disetujui --}}
-                    <tr style="transition: background 0.2s;">
-                        <td style="padding: 16px 24px; max-width: 320px;">
-                            <div style="font-weight: 700; color: var(--text-primary);">Budi Darmawan</div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">2010411032 • Teknik Informatika</div>
-                            <p style="font-size: 13px; font-weight: 600; color: var(--brand-dark); line-height: 1.4;">Implementasi Algoritma Floyd-Warshall dalam Optimasi Rute Logistik Maritim Indonesia</p>
-                        </td>
-                        <td style="padding: 16px 24px;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">15 Nov 2023</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">09:00 - 11:00 WIB</div>
-                            <div style="margin-top: 8px; font-size: 10px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 4px;">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                    <circle cx="12" cy="10" r="3"></circle>
-                                </svg>
-                                Ruang Seminar A
-                            </div>
-                        </td>
-                        <td style="padding: 16px 24px;">
-                            <div style="margin-bottom: 8px;">
-                                <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 1</div>
-                                <div style="font-size: 12px; font-weight: 600;">Dr. Ir. Heru Sujatmiko</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 2</div>
-                                <div style="font-size: 12px; font-weight: 600;">Siti Aminah, M.Kom.</div>
-                            </div>
-                        </td>
-                        <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
-                            Prof. Dr. Agus Salim
-                        </td>
-                        <td style="padding: 16px 24px;">
-                            <span class="badge badge-green">
-                                <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
-                                Disetujui
-                            </span>
-                        </td>
-                        <td style="padding: 16px 24px; text-align: right;">
-                            <button class="btn btn-secondary btn-sm" style="background: var(--brand-dark); color: #fff; border: none; padding: 8px 16px; gap: 6px;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                Berita Acara
-                            </button>
-                        </td>
-                    </tr>
-
-                    {{-- Row 2: Menunggu --}}
-                    <tr style="transition: background 0.2s; border-top: 1px solid var(--border-light);">
-                        <td style="padding: 16px 24px; max-width: 320px;">
-                            <div style="font-weight: 700; color: var(--text-primary);">Ani Wijaya</div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">2010411055 • Sistem Informasi</div>
-                            <p style="font-size: 13px; font-weight: 600; color: var(--brand-dark); line-height: 1.4;">Analisis User Experience pada Aplikasi Digital Government menggunakan Metrik HEART</p>
-                        </td>
-                        <td style="padding: 16px 24px;">
-                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">22 Des 2023</div>
-                            <div style="font-size: 12px; color: var(--text-secondary);">13:30 - 15:30 WIB</div>
-                            <div style="margin-top: 8px; font-size: 10px; color: var(--text-muted); font-style: italic;">
-                                Menunggu Konfirmasi
-                            </div>
-                        </td>
-                        <td style="padding: 16px 24px;">
-                            <div style="margin-bottom: 8px;">
-                                <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 1</div>
-                                <div style="font-size: 12px; font-weight: 600;">Dr. Linda Sari</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 2</div>
-                                <div style="font-size: 12px; font-weight: 600;">Ahmad Faisal, M.T.</div>
-                            </div>
-                        </td>
-                        <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
-                            Drs. Bambang Sudarmo
-                        </td>
-                        <td style="padding: 16px 24px;">
-                            <span class="badge" style="background: #CDFAF3; color: #007A6E;">
-                                <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite;"></span>
-                                Menunggu
-                            </span>
-                        </td>
-                        <td style="padding: 16px 24px; text-align: right;">
-                            <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.5; cursor: not-allowed; gap: 6px;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                </svg>
-                                Locked
-                            </button>
-                        </td>
-                    </tr>
+                    @forelse ($seminars as $seminar)
+                        <tr style="transition: background 0.2s;">
+                            <td style="padding: 16px 24px; max-width: 320px;">
+                                <div style="font-weight: 700; color: var(--text-primary);">{{ $seminar->mahasiswa->nama ?? 'N/A' }}</div>
+                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">{{ $seminar->nim }} • {{ $seminar->mahasiswa->prodi->nama ?? 'N/A' }}</div>
+                                <p style="font-size: 13px; font-weight: 600; color: var(--brand-dark); line-height: 1.4;">{{ $seminar->judul }}</p>
+                            </td>
+                            <td style="padding: 16px 24px;">
+                                @if($seminar->tanggal)
+                                    <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">{{ $seminar->tanggal->format('d M Y') }}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">{{ $seminar->waktu ?? '09:00 - 11:00' }} WIB</div>
+                                    <div style="margin-top: 8px; font-size: 10px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 4px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        {{ $seminar->tempat ?? 'TBA' }}
+                                    </div>
+                                @else
+                                    <div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Menunggu Jadwal</div>
+                                @endif
+                            </td>
+                            <td style="padding: 16px 24px;">
+                                <div style="margin-bottom: 8px;">
+                                    <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 1</div>
+                                    <div style="font-size: 12px; font-weight: 600;">{{ $seminar->pembimbing1->nama ?? '-' }}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 9px; text-transform: uppercase; opacity: 0.5;">Pembimbing 2</div>
+                                    <div style="font-size: 12px; font-weight: 600;">{{ $seminar->pembimbing2->nama ?? '-' }}</div>
+                                </div>
+                            </td>
+                            <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
+                                {{ $seminar->pengujiSeminar->nama ?? '-' }}
+                            </td>
+                            <td style="padding: 16px 24px;">
+                                @if($seminar->acc_seminar == 'Disetujui')
+                                    <span class="badge badge-green">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
+                                        Disetujui
+                                    </span>
+                                @elseif($seminar->acc_seminar == 'Ditolak')
+                                    <span class="badge badge-red" style="background: #FEE2E2; color: #991B1B;">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor;"></span>
+                                        Ditolak
+                                    </span>
+                                @else
+                                    <span class="badge" style="background: #CDFAF3; color: #007A6E;">
+                                        <span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite;"></span>
+                                        Menunggu
+                                    </span>
+                                @endif
+                            </td>
+                            <td style="padding: 16px 24px; text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                    @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
+                                        <button type="button" class="topbar-icon-btn" onclick="editSeminar({{ $seminar->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                        <form action="{{ route('portal.seminar.destroy', $seminar->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" style="padding: 48px; text-align: center; color: var(--text-muted);">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.3">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                        <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    <span>Tidak ada data seminar ditemukan</span>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
 
         {{-- Pagination --}}
         <div style="padding: 16px 24px; background: var(--bg-page); display: flex; align-items: center; justify-content: space-between;">
-            <span style="font-size: 12px; color: var(--text-muted);">Menampilkan 2 dari 12 pengajuan</span>
-            <div style="display: flex; gap: 8px;">
-                <button class="topbar-icon-btn" style="width: 32px; height: 32px;" disabled>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M10 12l-4-4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-                <button class="btn btn-primary" style="padding: 0; width: 32px; height: 32px; font-size: 12px;">1</button>
-                <button class="btn btn-secondary" style="padding: 0; border: none; width: 32px; height: 32px; font-size: 12px;">2</button>
-                <button class="btn btn-secondary" style="padding: 0; border: none; width: 32px; height: 32px; font-size: 12px;">3</button>
-                <button class="topbar-icon-btn" style="width: 32px; height: 32px;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M6 12l4-4-4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
+            <span style="font-size: 12px; color: var(--text-muted);">
+                Menampilkan {{ $seminars->firstItem() ?? 0 }} sampai {{ $seminars->lastItem() ?? 0 }} dari {{ $seminars->total() }} pengajuan
+            </span>
+            <div class="pagination-links">
+                {{ $seminars->links('pagination::bootstrap-4') }}
             </div>
         </div>
     </div>
 
-    {{-- ── Bottom Insight ── --}}
-    <div style="margin-top: 32px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-        <div style="background: linear-gradient(135deg, var(--bg-sidebar) 0%, var(--brand) 100%); border-radius: var(--radius-lg); padding: 32px; color: #fff; position: relative; overflow: hidden;">
-            <div style="position: relative; z-index: 1;">
-                <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">Persiapan Sidang Akhir?</h3>
-                <p style="font-size: 13px; color: rgba(255,255,255,0.7); max-width: 400px; margin-bottom: 24px;">Pastikan seluruh berita acara seminar sudah diunduh dan divalidasi oleh sekretariat akademik sebelum pendaftaran skripsi.</p>
-                <button class="btn btn-secondary" style="background: #fff; color: var(--brand-dark); border: none; border-radius: var(--radius-full); padding: 12px 32px;">Hubungi Admin Prodi</button>
+    {{-- Edit Modal --}}
+    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
+        <div class="card" style="width:100%; max-width:600px; padding:32px; background:var(--bg-card);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="font-size:18px; font-weight:700;">Edit Data Seminar</h2>
+                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
             </div>
-            <svg style="position: absolute; bottom: -40px; right: -40px; color: rgba(255,255,255,0.1); width: 240px; height: 240px;" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
-            </svg>
-        </div>
-
-        <div class="card" style="padding: 32px; background: var(--bg-page);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h3 style="font-weight: 700; color: var(--text-primary);">Statistik Seminar</h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand);">
-                    <path d="M3 3v18h18"></path>
-                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
-                </svg>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 16px;">
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                        <span style="font-size: 11px; color: var(--text-secondary);">Seminar Diselesaikan</span>
-                        <span style="font-size: 20px; font-weight: 800;">02</span>
+            <form id="editForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Judul Seminar</label>
+                    <textarea name="judul" id="edit_judul" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:16px;">
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 1</label>
+                        <select name="pembimbing1_id" id="edit_pembimbing1" class="form-control form-select" required>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="progress-bar" style="height: 4px;">
-                        <div class="progress-fill" style="width: 66%;"></div>
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 2</label>
+                        <select name="pembimbing2_id" id="edit_pembimbing2" class="form-control form-select">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px;">
-                        <span style="font-size: 11px; color: var(--text-secondary);">Dalam Antrean</span>
-                        <span style="font-size: 20px; font-weight: 800;">01</span>
+                <div class="form-row form-row-2" style="margin-bottom:16px;">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal</label>
+                        <input type="date" name="tanggal" id="edit_tanggal" class="form-control">
                     </div>
-                    <div class="progress-bar" style="height: 4px;">
-                        <div class="progress-fill" style="width: 33%; background: #00A896;"></div>
+                    <div class="form-group">
+                        <label class="form-label">Tempat</label>
+                        <input type="text" name="tempat" id="edit_tempat" class="form-control">
                     </div>
                 </div>
-            </div>
+                <div class="form-group" style="margin-bottom:24px;">
+                    <label class="form-label">Penguji Seminar</label>
+                    <select name="penguji_seminar_id" id="edit_penguji_seminar" class="form-control form-select">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                </div>
+                <div class="form-group" style="margin-bottom:24px;">
+                    <label class="form-label">Status Persetujuan</label>
+                    <select name="acc_seminar" id="edit_status" class="form-control form-select">
+                        <option value="Menunggu">Menunggu</option>
+                        <option value="Disetujui">Disetujui</option>
+                        <option value="Ditolak">Ditolak</option>
+                    </select>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    function editSeminar(id) {
+        fetch(`/portal/seminar/${id}/edit`)
+            .then(response => response.json())
+            .then(data => {
+                const form = document.getElementById('editForm');
+                form.action = `/portal/seminar/${id}`;
+                document.getElementById('edit_judul').value = data.judul;
+                document.getElementById('edit_pembimbing1').value = data.pembimbing1_id;
+                document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
+                document.getElementById('edit_penguji_seminar').value = data.penguji_seminar_id || '';
+                document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
+                document.getElementById('edit_tempat').value = data.tempat || '';
+                document.getElementById('edit_status').value = data.acc_seminar;
+                
+                document.getElementById('editModal').style.display = 'flex';
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+</script>
+@endpush
 @endsection

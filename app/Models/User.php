@@ -13,7 +13,7 @@ use Filament\Panel;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'nim', 'nidn'])]
+#[Fillable(['name', 'email', 'password', 'nim', 'nidn', 'theme'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
