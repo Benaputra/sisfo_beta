@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pengajuan_juduls', function (Blueprint $table) {
+        Schema::table('pengajuan_judul', function (Blueprint $table) {
             $table->unsignedBigInteger('pembimbing1_id')->nullable();
             $table->unsignedBigInteger('pembimbing2_id')->nullable();
 
-            $table->foreign('pembimbing1_id')->references('id')->on('dosens')->onDelete('set null');
-            $table->foreign('pembimbing2_id')->references('id')->on('dosens')->onDelete('set null');
+            $table->foreign('pembimbing1_id')->references('id')->on('dosen')->onDelete('set null');
+            $table->foreign('pembimbing2_id')->references('id')->on('dosen')->onDelete('set null');
         });
     }
 
@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pengajuan_juduls', function (Blueprint $table) {
+        Schema::table('pengajuan_judul', function (Blueprint $table) {
             $table->dropForeign(['pembimbing1_id']);
             $table->dropForeign(['pembimbing2_id']);
             $table->dropColumn(['pembimbing1_id', 'pembimbing2_id']);

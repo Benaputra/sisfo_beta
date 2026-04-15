@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('pengajuan_juduls', function (Blueprint $table) {
+        Schema::create('pengajuan_judul', function (Blueprint $table) {
             $table->id();
             $table->string('nim');
             $table->text('judul');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('keterangan')->nullable();
             $table->timestamps();
 
-            $table->foreign('nim')->references('nim')->on('mahasiswas')->onDelete('cascade');
+            $table->foreign('nim')->references('nim')->on('mahasiswa')->onDelete('cascade');
         });
     }
 
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('pengajuan_juduls');
+        Schema::dropIfExists('pengajuan_judul');
     }
 };
