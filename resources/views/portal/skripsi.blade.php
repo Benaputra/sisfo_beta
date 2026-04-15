@@ -67,7 +67,7 @@
                     <div class="section-label" style="margin-top: 16px; margin-bottom: 24px;">THESIS PARTICULARS</div>
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label class="form-label">Thesis Title</label>
-                        <textarea name="judul" class="form-control" rows="4" placeholder="Enter the full working title..." required></textarea>
+                        <textarea name="judul" class="form-control" rows="4" placeholder="Enter the full working title..." required {{ isset($approvedJudul) ? 'readonly' : '' }}>{{ $approvedJudul?->judul ?? '' }}</textarea>
                     </div>
 
                     <div class="form-row form-row-2">

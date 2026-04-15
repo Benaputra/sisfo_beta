@@ -64,6 +64,16 @@
                 Dashboard
             </a>
 
+            <a href="{{ route('portal.riwayatPengajuanJudul') }}"
+               class="sidebar-nav-item {{ request()->routeIs('portal.riwayatPengajuanJudul') || request()->routeIs('portal.pengajuanJudul') ? 'active' : '' }}">
+                <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                    <path d="M12 2H4a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V5l-3-3z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 2v3h3" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M6 8h6M6 11h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Pengajuan Judul
+            </a>
+
             <a href="{{ route('portal.riwayatSkripsi') }}"
                class="sidebar-nav-item {{ request()->routeIs('portal.skripsi') || request()->routeIs('portal.riwayatSkripsi') ? 'active' : '' }}">
                 <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
@@ -102,6 +112,17 @@
                 </svg>
                 Praktek Lapang
             </a>
+
+            @if(auth()->user()->hasAnyRole(['staff', 'kaprodi']))
+            <a href="{{ route('portal.riwayatSurat') }}"
+               class="sidebar-nav-item {{ request()->routeIs('portal.riwayatSurat') ? 'active' : '' }}">
+                <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                    <path d="M4 2h10a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M6 5h6M6 8h6M6 11h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                Arsip Surat
+            </a>
+            @endif
 
             <!-- <div class="sidebar-nav-label" style="margin-top:8px;">Bantuan</div>
             <a href="#" class="sidebar-nav-item">

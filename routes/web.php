@@ -34,6 +34,15 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::put('/skripsi/{id}', [PortalController::class, 'updateSkripsi'])->name('skripsi.update');
     Route::delete('/skripsi/{id}', [PortalController::class, 'destroySkripsi'])->name('skripsi.destroy');
 
+    // Pengajuan Judul
+    Route::get('/pengajuan-judul', [PortalController::class, 'pengajuanJudul'])->name('pengajuanJudul');
+    Route::post('/pengajuan-judul', [PortalController::class, 'storePengajuanJudul'])->name('pengajuanJudul.store');
+    Route::get('/riwayat-pengajuan-judul', [PortalController::class, 'riwayatPengajuanJudul'])->name('riwayatPengajuanJudul');
+    Route::post('/pengajuan-judul/{id}/approve', [PortalController::class, 'approvePengajuanJudul'])->name('pengajuanJudul.approve');
+    Route::get('/pengajuan-judul/{id}/download-surat', [PortalController::class, 'downloadSuratKesediaan'])->name('pengajuanJudul.downloadSurat');
+    Route::post('/pengajuan-judul/{id}/notify', [PortalController::class, 'notifyJudul'])->name('pengajuanJudul.notify');
+    Route::delete('/pengajuan-judul/{id}', [PortalController::class, 'destroyPengajuanJudul'])->name('pengajuanJudul.destroy');
+
     // Praktek Lapang
     Route::get('/praktek-lapang', [PortalController::class, 'praktekLapang'])->name('praktekLapang');
     Route::post('/praktek-lapang', [PortalController::class, 'storePraktekLapang'])->name('praktekLapang.store');
@@ -44,4 +53,9 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     
     // Theme
     Route::post('/update-theme', [PortalController::class, 'updateTheme'])->name('updateTheme');
+
+    // Surat
+    Route::get('/riwayat-surat', [PortalController::class, 'riwayatSurat'])->name('riwayatSurat');
+    Route::post('/surat', [PortalController::class, 'storeSurat'])->name('surat.store');
+    Route::get('/surat/{id}', [PortalController::class, 'viewSurat'])->name('surat.view');
 });

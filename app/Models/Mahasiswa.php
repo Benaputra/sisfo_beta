@@ -80,4 +80,12 @@ class Mahasiswa extends Model
     {
         return $this->hasMany(SeminarPenonton::class, 'nim', 'nim');
     }
+
+    /**
+     * Relasi ke Pengajuan Judul
+     */
+    public function pengajuanJudul(): HasOne
+    {
+        return $this->hasOne(PengajuanJudul::class, 'nim', 'nim');
+    }
 }
