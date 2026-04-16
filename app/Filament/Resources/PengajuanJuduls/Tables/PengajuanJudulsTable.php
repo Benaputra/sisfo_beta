@@ -32,6 +32,11 @@ class PengajuanJudulsTable
                     }),
                 TextColumn::make('pembimbing1.nama')->label('Pembimbing 1'),
                 TextColumn::make('pembimbing2.nama')->label('Pembimbing 2'),
+                TextColumn::make('is_kesediaan_valid')
+                    ->label('Kesediaan')
+                    ->badge()
+                    ->formatStateUsing(fn ($state, $record) => $record->file_kesediaan ? ($state ? 'Valid' : 'Menunggu Validasi') : 'Belum Upload')
+                    ->color(fn ($state, $record) => $record->file_kesediaan ? ($state ? 'success' : 'warning') : 'gray'),
             ])
             ->filters([
                 //
@@ -60,27 +65,67 @@ class PengajuanJudulsTable
                     ])
                     ->visible(fn (\App\Models\PengajuanJudul $record) => $record->status === 'pending')
                     ->action(function (\App\Models\PengajuanJudul $record, array $data) {
+                        // Buat record di tabel surats untuk surat kesediaan bimbingan
+                        $surat = \App\Models\Surat::create([
+                            'jenis_surat' => 'Surat Kesediaan Bimbingan',
+                            'no_surat'    => $data['no_surat'],
+                            'tujuan_surat' => $record->mahasiswa?->nama,
+                        ]);
+
                         $record->update([
-                            'status' => 'disetujui',
-                            'no_surat' => $data['no_surat'],
+                            'status'        => 'disetujui',
+                            'no_surat'      => $data['no_surat'],
+                            'surat_id'      => $surat->id,
                             'pembimbing1_id' => $data['pembimbing1_id'],
                             'pembimbing2_id' => $data['pembimbing2_id'] ?? null,
-                            'keterangan' => $data['keterangan'] ?? null,
+                            'keterangan'    => $data['keterangan'] ?? null,
                             'surat_kesediaan' => 'generated',
                         ]);
-                        
+
                         $mahasiswa = $record->mahasiswa;
                         if ($mahasiswa && $mahasiswa->no_hp) {
                             $hour = now()->format('H');
                             $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
                             $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". Pengajuan judul skripsi Anda dengan judul: \"{$record->judul}\" telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
-                            
+
                             $waService = new \App\Services\WhatsAppService();
                             $waService->send($mahasiswa->no_hp, $message);
                         }
-                        
+
                         Notification::make()
                             ->title('Status disetujui & WA terkirim')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('validate_kesediaan')
+                    ->label('Validasi Kesediaan')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Validasi Surat Kesediaan Bimbingan')
+                    ->modalDescription('Apakah Anda yakin surat kesediaan ini valid? Data akan diteruskan ke pendaftaran seminar.')
+                    ->visible(fn (\App\Models\PengajuanJudul $record) => $record->file_kesediaan && !$record->is_kesediaan_valid)
+                    ->action(function (\App\Models\PengajuanJudul $record) {
+                        $record->update(['is_kesediaan_valid' => true]);
+
+                        // Otomatis buat/perbarui record seminar dengan status Menunggu
+                        \App\Models\Seminar::updateOrCreate(
+                            ['pengajuan_judul_id' => $record->id],
+                            [
+                                'nim'              => $record->nim,
+                                'judul'            => $record->judul,
+                                'pembimbing1_id'   => $record->pembimbing1_id,
+                                'pembimbing2_id'   => $record->pembimbing2_id,
+                                'acc_seminar'      => 'Menunggu',
+                                'bukti_bayar'      => $record->bukti_bayar,
+                                'is_kesediaan_valid' => true,
+                                'file_kesediaan'   => $record->file_kesediaan,
+                                'surat_kesediaan_id' => $record->surat_id,
+                            ]
+                        );
+
+                        Notification::make()
+                            ->title('Kesediaan divalidasi & diteruskan ke seminar')
                             ->success()
                             ->send();
                     }),

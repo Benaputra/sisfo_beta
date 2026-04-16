@@ -18,7 +18,7 @@
             <h1 class="page-title">Riwayat <span>Seminar</span></h1>
             <p class="page-desc">Kelola dan pantau seluruh pengajuan seminar Anda. Di sini Anda dapat melihat status persetujuan, jadwal, dan mengunduh berita acara resmi.</p>
         </div>
-        <div>
+        <!-- <div>
             <a href="{{ route('portal.seminar') }}" class="btn btn-primary" style="padding: 12px 24px; gap: 8px;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -26,7 +26,7 @@
                 </svg>
                 Tambah seminar baru
             </a>
-        </div>
+        </div> -->
     </div>
 
     {{-- ── Filter & Search Section ── --}}
