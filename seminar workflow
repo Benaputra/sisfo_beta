@@ -1,0 +1,62 @@
+# Perubahan Alur Kerja Seminar (Surat Kesediaan Bimbingan)
+
+Berikut adalah rencana perubahan alur sistem untuk menu Seminar sesuai dengan permintaan Anda. Alur ini menambahkan tahap verifikasi "Surat Kesediaan Bimbingan" yang ditandatangani dosen sebelum Surat Undangan Seminar diterbitkan.
+
+## Alur Sistem Baru
+
+```mermaid
+sequenceDiagram
+    participant M as Mahasiswa
+    participant P as Portal (Frontend)
+    participant B as Filament (Staff/Admin)
+
+    M->>P: Daftar Seminar (Input Judul + Bukti Bayar)
+    B->>B: Staff Tentukan Dosen Pembimbing & Penguji
+    
+    Note over P,B: Syarat "Surat Kesediaan" Terpenuhi
+    
+    P->>M: Tombol "Download Surat Kesediaan" Muncul
+    M->>M: Cetak & Minta TTD Dosen Pembimbing
+    M->>P: Upload Scan Surat Kesediaan (TTD)
+    
+    B->>B: Staff Review Scan Dokumen
+    alt Jika Dokumen Valid
+        B->>B: Staff Klik Toggle "Validasi Kesediaan"
+        P->>M: Tombol "Download Undangan Seminar" Muncul
+    else Jika Tidak Valid
+        B->>P: Beri Keterangan Revisi
+    end
+```
+
+## Rencana Implementasi
+
+### 1. Perubahan Database
+Menambahkan kolom baru pada tabel `seminar`:
+*   `file_kesediaan`: Menyimpan path file scan surat kesediaan yang diunggah mahasiswa.
+*   `is_kesediaan_valid`: Boolean untuk menandai apakah dokumen yang diunggah sudah divalidasi oleh staff.
+
+### 2. Update Model `Seminar.php`
+*   **Logic `canDownloadKesediaan()`**: Mengizinkan unduh surat kesediaan jika Pembimbing 1, Pembimbing 2, dan Bukti Bayar sudah ada.
+*   **Update `canGenerateSurat()`**: Syarat baru ditambahkan; harus memiliki `is_kesediaan_valid = true`.
+
+### 3. Frontend (Portal Mahasiswa)
+*   **Update Riwayat Seminar**:
+    *   Menambahkan tombol **"Unduh Surat Kesediaan"** (jika dosen sudah di-plot).
+    *   Menambahkan tombol **"Upload Surat Kesediaan (TTD)"** yang memunculkan modal upload.
+*   **PortalController**: Menambahkan method `uploadKesediaanSeminar` untuk menangani penyimpanan file.
+
+### 4. Backend (Admin Filament)
+*   **SeminarForm**:
+    *   Menambahkan field untuk melihat file yang diunggah mahasiswa.
+    *   Menambahkan Toggle **"Validasi Surat Kesediaan"** hanya untuk Staff/Admin.
+*   **SeminarsTable**: 
+    *   Menampilkan status validasi kesediaan di tabel utama.
+
+## Keuntungan Alur Baru
+1.  **Validitas Formal**: Memastikan dosen pembimbing benar-benar bersedia sebelum undangan resmi dibuat.
+2.  **Paperless Tracking**: Semua dokumen (scan) tersimpan di sistem untuk arsip digital.
+3.  **Kontrol Staff**: Staff memiliki kendali penuh untuk memverifikasi keaslian tanda tangan sebelum melangkah ke tahap selanjutnya.
+
+---
+> [!IMPORTANT]
+> Apakah alur ini sudah sesuai dengan yang Anda harapkan? Jika ya, saya akan mulai melakukan migrasi database dan pembaruan kode.

@@ -21,14 +21,16 @@ class SendWhatsAppNotification implements ShouldQueue
 
     protected $model;
     protected string $type;
+    protected ?string $customMessage;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($model, string $type)
+    public function __construct($model, string $type, ?string $customMessage = null)
     {
         $this->model = $model;
         $this->type = $type;
+        $this->customMessage = $customMessage;
     }
 
     /**
@@ -40,8 +42,8 @@ class SendWhatsAppNotification implements ShouldQueue
         $nomor = $mahasiswa->no_hp;
 
         if (!$nomor) return;
-
-        $pesan = $this->generateMessage($mahasiswa->nama);
+        
+        $pesan = $this->customMessage ?? $this->generateMessage($mahasiswa->nama);
 
         $success = $waService->send($nomor, $pesan);
 

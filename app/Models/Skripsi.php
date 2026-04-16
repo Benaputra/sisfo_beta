@@ -24,13 +24,19 @@ class Skripsi extends Model
         'bukti_bayar',
         'transkrip_nilai',
         'toefl',
+        'status',
+        'surat_kesediaan_id',
+        'file_kesediaan',
+        'is_kesediaan_valid',
         'surat_undangan_id',
+        'pengajuan_judul_id',
         'notifikasi_whatsapp',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
         'notifikasi_whatsapp' => 'boolean',
+        'is_kesediaan_valid' => 'boolean',
     ];
 
     /**
@@ -50,11 +56,43 @@ class Skripsi extends Model
     }
 
     /**
-     * Cek kelengkapan file (TOEFL & Bukti Bayar)
+     * Relasi ke Surat Kesediaan
      */
-    public function canGenerateSurat(): bool
+    public function suratKesediaan(): BelongsTo
     {
-        return !empty($this->toefl) && !empty($this->bukti_bayar);
+        return $this->belongsTo(Surat::class, 'surat_kesediaan_id');
+    }
+
+    /**
+     * Relasi ke Pengajuan Judul
+     */
+    public function pengajuanJudul(): BelongsTo
+    {
+        return $this->belongsTo(PengajuanJudul::class, 'pengajuan_judul_id');
+    }
+
+    /**
+     * Cek kelengkapan file awal
+     */
+    public function isDataComplete(): bool
+    {
+        return !empty($this->toefl) && !empty($this->bukti_bayar) && !empty($this->transkrip_nilai);
+    }
+
+    /**
+     * Cek apakah surat kesediaan sidang bisa diunduh oleh mahasiswa
+     */
+    public function canDownloadKesediaan(): bool
+    {
+        return $this->surat_kesediaan_id !== null;
+    }
+
+    /**
+     * Cek apakah surat undangan sidang bisa didownload (setelah validasi)
+     */
+    public function canDownloadUndangan(): bool
+    {
+        return $this->is_kesediaan_valid && $this->surat_undangan_id !== null;
     }
 
     // --- Relasi Dosen ---

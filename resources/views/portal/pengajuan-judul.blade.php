@@ -115,13 +115,112 @@
             </div>
         @endif
     @else
-        {{-- For Staff/Dosen --}}
-        <div class="card" style="padding: 48px; text-align: center;">
-            <p style="color: var(--text-muted);">Halaman ini khusus untuk pendaftaran mahasiswa.</p>
-            <div style="margin-top: 16px;">
-                <a href="{{ route('portal.riwayatPengajuanJudul') }}" class="btn btn-primary">Buka Riwayat Pengajuan</a>
-            </div>
+        {{-- For Staff/Kaprodi --}}
+        <div class="card" style="padding: 32px;">
+            <form action="{{ route('portal.pengajuanJudul.store') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div style="max-width: 800px;">
+                    <div class="section-label" style="margin-bottom: 24px;">PENDAFTARAN OLEH STAF/KAPRODI</div>
+                    
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="form-label" for="mahasiswa_select">Pilih Mahasiswa</label>
+                        <select name="nim" id="mahasiswa_select" class="form-control" required placeholder="Cari NIM atau Nama Mahasiswa..."></select>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ketik minimal 1 karakter untuk mencari mahasiswa.</p>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 24px;">
+                        <label class="form-label">Judul Skripsi yang Diajukan</label>
+                        <textarea name="judul" class="form-control" rows="4" placeholder="Masukkan judul lengkap skripsi..." required></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 32px;">
+                        <label class="form-label">Bukti Pembayaran (Opsional)</label>
+                        <input type="file" name="bukti_bayar" class="form-control">
+                    </div>
+
+                    <div style="display: flex; gap: 16px; align-items: center;">
+                        <button type="submit" class="btn btn-primary btn-lg">Daftarkan Mahasiswa</button>
+                        <a href="{{ route('portal.riwayatPengajuanJudul') }}" class="btn btn-secondary">Batal</a>
+                    </div>
+                </div>
+            </form>
         </div>
+
+        @push('styles')
+        <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+        <style>
+            .ts-control { 
+                border-radius: 12px !important; 
+                padding: 10px 14px !important; 
+                border: 1px solid var(--border) !important; 
+                background: var(--bg-card) !important; 
+                color: var(--text-primary) !important;
+                font-family: inherit !important;
+                font-size: 14px !important;
+                box-shadow: none !important;
+                transition: var(--transition) !important;
+            }
+            .ts-wrapper.focus .ts-control {
+                border-color: var(--brand) !important;
+                box-shadow: 0 0 0 3px rgba(2, 195, 154, 0.12) !important;
+            }
+            .ts-dropdown { 
+                border-radius: 12px !important; 
+                box-shadow: var(--shadow-lg) !important; 
+                background: var(--bg-card) !important; 
+                color: var(--text-primary) !important;
+                border: 1px solid var(--border) !important;
+                margin-top: 4px !important;
+                overflow: hidden !important;
+            }
+            .ts-dropdown .active { 
+                background: var(--brand) !important; 
+                color: white !important; 
+            }
+            .ts-dropdown .option {
+                padding: 10px 14px !important;
+            }
+            .ts-dropdown .option:hover:not(.active) {
+                background: var(--bg-page) !important;
+            }
+            /* Dark theme specifics if needed, but variables should handle most */
+            .dark-theme .ts-dropdown .option:hover:not(.active) {
+                background: var(--border-light) !important;
+            }
+        </style>
+        @endpush
+
+        @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var select = new TomSelect('#mahasiswa_select', {
+                    valueField: 'id',
+                    labelField: 'text',
+                    searchField: 'text',
+                    loadThrottle: 300,
+                    load: function(query, callback) {
+                        if (!query.length) return callback();
+                        fetch('{{ route('portal.searchMahasiswa') }}?q=' + encodeURIComponent(query))
+                            .then(response => response.json())
+                            .then(json => {
+                                callback(json);
+                            }).catch(() => {
+                                callback();
+                            });
+                    },
+                    render: {
+                        option: function(item, escape) {
+                            return '<div>' + escape(item.text) + '</div>';
+                        },
+                        item: function(item, escape) {
+                            return '<div>' + escape(item.text) + '</div>';
+                        }
+                    }
+                });
+            });
+        </script>
+        @endpush
     @endif
 </div>
 @endsection

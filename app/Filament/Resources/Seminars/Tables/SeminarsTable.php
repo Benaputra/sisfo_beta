@@ -30,11 +30,17 @@ class SeminarsTable
                     ->badge()
                     ->color(fn ($state) => $state === 'Terkirim' ? 'success' : 'gray'),
 
-                TextColumn::make('status_kelengkapan')
-                    ->label('Status')
-                    ->state(fn (Seminar $record) => $record->canGenerateSurat() ? 'Lengkap' : 'Belum')
+                TextColumn::make('is_kesediaan_valid')
+                    ->label('Kesediaan')
+                    ->formatStateUsing(fn ($state) => $state ? 'Valid' : 'Pending')
                     ->badge()
-                    ->color(fn ($state) => $state === 'Lengkap' ? 'success' : 'warning'),
+                    ->color(fn ($state) => $state ? 'success' : 'warning'),
+
+                TextColumn::make('status_kelengkapan')
+                    ->label('Status Undangan')
+                    ->state(fn (Seminar $record) => $record->canGenerateSurat() ? 'Siap' : 'Belum')
+                    ->badge()
+                    ->color(fn ($state) => $state === 'Siap' ? 'success' : 'warning'),
             ])
             ->filters([])
             ->recordActions([
@@ -79,6 +85,71 @@ class SeminarsTable
                         return response()->streamDownload(function () use ($pdf) {
                             echo $pdf->stream();
                         }, $filename);
+                    }),
+
+                Action::make('validateKesediaan')
+                    ->label('Validasi Kesediaan')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Validasi Surat Kesediaan')
+                    ->modalDescription('Apakah Anda yakin ingin memvalidasi surat kesediaan ini? Data akan otomatis diteruskan ke tabel skripsi dengan status menunggu.')
+                    ->visible(fn (Seminar $record) => $record->file_kesediaan && !$record->is_kesediaan_valid)
+                    ->action(function (Seminar $record) {
+                        $record->update(['is_kesediaan_valid' => true]);
+                        
+                        \App\Models\Skripsi::updateOrCreate(
+                            ['nim' => $record->nim],
+                            [
+                                'judul' => $record->judul,
+                                'pembimbing1_id' => $record->pembimbing1_id,
+                                'pembimbing2_id' => $record->pembimbing2_id,
+                                'status' => 'menunggu',
+                                'pengajuan_judul_id' => $record->pengajuan_judul_id,
+                            ]
+                        );
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Surat kesediaan divalidasi & data diteruskan ke skripsi')
+                            ->success()
+                            ->send();
+                    }),
+
+                Action::make('kirimWa')
+                    ->label('Kirim WA')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->form([
+                        \Filament\Forms\Components\Textarea::make('message')
+                            ->label('Pesan WhatsApp')
+                            ->rows(5)
+                            ->default(function (Seminar $record) {
+                                $hour = now()->format('H');
+                                $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
+                                $mahasiswa = $record->mahasiswa;
+                                $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
+                                
+                                if ($record->canGenerateSurat()) {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+                                } elseif ($record->file_kesediaan) {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Kesediaan Bimbingan Anda sedang divalidasi. Mohon cek berkala untuk mengunduh Surat Undangan Seminar jika sudah disetujui. Terima Kasih.";
+                                } elseif ($record->canDownloadKesediaan()) {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Silakan diprint dan dimintakan tanda tangan dosen pembimbing, lalu unggah kembali scan surat tersebut ke portal. Terima Kasih.";
+                                } else {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pendaftaran seminar Anda sedang dalam proses verifikasi staff. Terima Kasih.";
+                                }
+                            })
+                            ->required(),
+                    ])
+                    ->modalHeading('Kirim Notifikasi WhatsApp')
+                    ->modalDescription('Tinjau dan ubah isi pesan sebelum mengirim.')
+                    ->action(function (Seminar $record, array $data) {
+                        \App\Jobs\SendWhatsAppNotification::dispatch($record, 'seminar', $data['message']);
+                        
+                        \Filament\Notifications\Notification::make()
+                            ->title('Notifikasi WA sedang dikirim')
+                            ->success()
+                            ->send();
                     }),
             ])
             ->toolbarActions([

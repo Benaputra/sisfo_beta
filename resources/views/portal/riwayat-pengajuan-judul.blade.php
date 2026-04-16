@@ -24,17 +24,15 @@
                 @endif
             </p>
         </div>
-        @if(!$isStaff && !$hasApproved && !$hasPending)
-            <div>
-                <a href="{{ route('portal.pengajuanJudul') }}" class="btn btn-primary" style="padding: 12px 24px; gap: 8px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Ajukan Judul Baru
-                </a>
-            </div>
-        @endif
+        <div>
+            <a href="{{ route('portal.pengajuanJudul') }}" class="btn btn-primary" style="padding: 12px 24px; gap: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Ajukan Judul Baru
+            </a>
+        </div>
     </div>
 
     {{-- ── Filter & Search Section ── --}}
@@ -134,11 +132,46 @@
                                         </button>
                                     @endif
 
-                                    @if($p->status == 'disetujui' && $p->surat_kesediaan)
-                                        <a href="{{ route('portal.pengajuanJudul.downloadSurat', $p->id) }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                            Surat
-                                        </a>
+                                    @if($p->status == 'disetujui')
+                                        <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                                            {{-- Tahap 1: Surat Kesediaan --}}
+                                            @if(!$p->file_kesediaan)
+                                                <div style="background: var(--brand-light); padding: 8px 12px; border-radius: 8px; border: 1px dashed var(--brand);">
+                                                    <div style="font-size: 9px; color: var(--brand); font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Tahap 1: Tanda Tangan</div>
+                                                    <div style="display: flex; gap: 8px;">
+                                                        <a href="{{ route('portal.pengajuanJudul.downloadSurat', $p->id) }}" target="_blank" class="btn btn-primary btn-sm" style="font-size: 10px; padding: 4px 8px; flex: 1;">Unduh</a>
+                                                        @if(!$isStaff)
+                                                            <button onclick="openUploadModal({{ $p->id }})" class="btn btn-secondary btn-sm" style="font-size: 10px; padding: 4px 8px; flex: 1; background: #fff;">Upload</button>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @elseif(!$p->is_kesediaan_valid)
+                                                <div style="background: #FFFBEB; padding: 8px 12px; border-radius: 8px; border: 1px dashed #F59E0B;">
+                                                    <div style="font-size: 9px; color: #D97706; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Tahap 2: Validasi Staff</div>
+                                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                                        <a href="{{ asset('storage/' . $p->file_kesediaan) }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size: 10px; padding: 4px 8px; flex: 1;">Lihat Doc</a>
+                                                        @if($isStaff)
+                                                            <form action="{{ route('portal.pengajuanJudul.validate', $p->id) }}" method="POST" style="flex: 1;">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-primary btn-sm" style="font-size: 10px; padding: 4px 8px; width: 100%; background: #059669; border:none;">Validasi</button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div style="background: #F0FDF4; padding: 8px 12px; border-radius: 8px; border: 1px solid #BBF7D0;">
+                                                    <div style="font-size: 9px; color: #15803D; font-weight: 800; text-transform: uppercase; margin-bottom: 4px;">Terverifikasi</div>
+                                                    <div style="display: flex; gap: 8px;">
+                                                        <a href="{{ route('portal.pengajuanJudul.downloadSurat', $p->id) }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size: 10px; padding: 4px 8px; flex: 1; color: #15803D; border-color: #BBF7D0;">
+                                                            Download Surat
+                                                        </a>
+                                                        <a href="{{ asset('storage/' . $p->file_kesediaan) }}" target="_blank" class="btn btn-ghost btn-sm" style="font-size: 10px; padding: 4px 8px; flex: 1; color: #15803D; border-color: #BBF7D0;">
+                                                            Arsip TTD
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
                                     @endif
                                 </div>
                             </td>
@@ -230,6 +263,32 @@
     </div>
 </div>
 
+{{-- Upload Modal --}}
+<div id="modalUpload" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Upload Surat Kesediaan (TTD)</h3>
+            <button class="modal-close" onclick="closeUploadModal()">×</button>
+        </div>
+        <form id="formUpload" action="" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-body">
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">
+                    Silakan unggah Surat Kesediaan Bimbingan yang telah ditandatangani oleh Dosen Pembimbing dalam format PDF/JPG.
+                </p>
+                <div class="form-group">
+                    <label class="form-label">Pilih File</label>
+                    <input type="file" name="file_kesediaan" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Unggah Sekarang</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 {{-- WhatsApp Preview Modal --}}
 <div id="waModal" class="modal-overlay" style="display: none;">
     <div class="modal-content" style="max-width: 500px;">
@@ -268,6 +327,36 @@
     const waMessage = document.getElementById('wa_display_message');
     const btnSendWa = document.getElementById('btnSendWa');
 
+    const p1Select = document.querySelector('select[name="pembimbing1_id"]');
+    const p2Select = document.querySelector('select[name="pembimbing2_id"]');
+
+    function filterOptions() {
+        const val1 = p1Select.value;
+        const val2 = p2Select.value;
+
+        const selectors = [p1Select, p2Select];
+        const values = [val1, val2];
+
+        selectors.forEach((select, index) => {
+            Array.from(select.options).forEach(opt => {
+                if (opt.value === "") return;
+                
+                // Hide if selected in any OTHER dropdown
+                let isMatch = false;
+                values.forEach((v, vIndex) => {
+                    if (index !== vIndex && opt.value === v && v !== "") {
+                        isMatch = true;
+                    }
+                });
+
+                opt.style.display = isMatch ? 'none' : 'block';
+                opt.disabled = isMatch;
+            });
+        });
+    }
+
+    [p1Select, p2Select].forEach(s => s.addEventListener('change', filterOptions));
+
     document.querySelectorAll('.btn-generate').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
@@ -278,6 +367,13 @@
             form.action = `/portal/pengajuan-judul/${id}/approve`;
             modalMahasiswa.innerText = `${nama} (${nim})`;
             modalJudul.innerText = `"${judul}"`;
+            
+            // Reset fields
+            p1Select.value = "";
+            p2Select.value = "";
+            
+            filterOptions();
+
             modal.style.display = 'flex';
         });
     });
@@ -318,6 +414,17 @@
         waModal.style.display = 'none';
     }
 
+    function openUploadModal(id) {
+        const modalUpload = document.getElementById('modalUpload');
+        const formUpload = document.getElementById('formUpload');
+        formUpload.action = `/portal/pengajuan-judul/${id}/kesediaan`;
+        modalUpload.style.display = 'flex';
+    }
+
+    function closeUploadModal() {
+        document.getElementById('modalUpload').style.display = 'none';
+    }
+
     function closeModal() {
         if(modal) modal.style.display = 'none';
     }
@@ -325,6 +432,7 @@
     window.onclick = function(e) {
         if (e.target === modal) closeModal();
         if (e.target === waModal) closeWaModal();
+        if (e.target === document.getElementById('modalUpload')) closeUploadModal();
     };
 </script>
 @endpush
