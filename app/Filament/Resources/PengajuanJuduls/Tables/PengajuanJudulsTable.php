@@ -117,10 +117,10 @@ class PengajuanJudulsTable
                                 'pembimbing1_id'   => $record->pembimbing1_id,
                                 'pembimbing2_id'   => $record->pembimbing2_id,
                                 'acc_seminar'      => 'Menunggu',
-                                'bukti_bayar'      => $record->bukti_bayar,
-                                'is_kesediaan_valid' => true,
-                                'file_kesediaan'   => $record->file_kesediaan,
-                                'surat_kesediaan_id' => $record->surat_id,
+                                'bukti_bayar'      => null,
+                                'is_kesediaan_valid' => false,
+                                'file_kesediaan'   => null,
+                                'surat_kesediaan_id' => null,
                             ]
                         );
 
