@@ -80,6 +80,22 @@ class SeminarsTable
                             echo $pdf->stream();
                         }, $filename);
                     }),
+
+                Action::make('kirimWa')
+                    ->label('Kirim WA')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Kirim Notifikasi WhatsApp')
+                    ->modalDescription('Apakah Anda yakin ingin mengirim notifikasi WA ke mahasiswa ini?')
+                    ->visible(fn (Seminar $record) => $record->canGenerateSurat())
+                    ->action(function (Seminar $record) {
+                        SendWhatsAppNotification::dispatch($record, 'seminar');
+                        \Filament\Notifications\Notification::make()
+                            ->title('Notifikasi WA sedang dikirim')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

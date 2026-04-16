@@ -80,11 +80,6 @@ class SeminarForm
                     ->directory('seminar/acc')
                     ->maxSize(3072)
                     ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png']),
-
-                Toggle::make('notifikasi_whatsapp')
-                    ->label('Kirim Notifikasi WA')
-                    ->visible(fn () => auth()->user()->hasAnyRole(['admin', 'staff', 'kaprodi']))
-                    ->disabled(fn () => auth()->user()->hasRole('mahasiswa')),
             ]);
     }
 }

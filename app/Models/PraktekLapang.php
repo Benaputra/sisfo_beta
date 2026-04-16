@@ -19,6 +19,7 @@ class PraktekLapang extends Model
         'bukti_bayar',
         'dosen_pembimbing_id',
         'surat_id',
+        'notifikasi_whatsapp',
     ];
 
     /**
