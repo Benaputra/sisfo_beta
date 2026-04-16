@@ -65,6 +65,23 @@ class SkripsiForm
                 ->live(),
             DatePicker::make('tanggal')->required(),
             TextInput::make('tempat')->required(),
+            Select::make('status')
+                ->options([
+                    'menunggu' => 'Menunggu',
+                    'proses' => 'Dalam Proses',
+                    'disetujui' => 'Disetujui',
+                    'ditolak' => 'Ditolak',
+                ])
+                ->default('menunggu')
+                ->required(),
+            \Filament\Forms\Components\Toggle::make('is_kesediaan_valid')
+                ->label('Kesediaan Valid')
+                ->visible(fn () => auth()->user()->hasAnyRole(['admin', 'staff', 'kaprodi'])),
+            FileUpload::make('file_kesediaan')
+                ->label('Surat Kesediaan Tertanda')
+                ->disk('public')
+                ->directory('skripsi/kesediaan')
+                ->preserveFilenames(),
             FileUpload::make('bukti_bayar')->disk('public')->directory('skripsi/bukti'),
             FileUpload::make('transkrip_nilai')->disk('public')->directory('skripsi/transkrip'),
             FileUpload::make('toefl')->label('Sertifikat TOEFL')->disk('public')->directory('skripsi/toefl'),

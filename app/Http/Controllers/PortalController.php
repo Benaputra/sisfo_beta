@@ -729,6 +729,28 @@ class PortalController extends Controller
         return back()->with('success', 'Surat kesediaan berhasil divalidasi dan data telah diteruskan ke pendaftaran seminar dengan status Menunggu.');
     }
 
+    public function quickValidateSeminar(Request $request, $id)
+    {
+        $seminar = Seminar::findOrFail($id);
+        $seminar->update([
+            'is_kesediaan_valid' => true,
+        ]);
+
+        // Teruskan data ke tabel skripsi
+        Skripsi::updateOrCreate(
+            ['nim' => $seminar->nim],
+            [
+                'judul' => $seminar->judul,
+                'pembimbing1_id' => $seminar->pembimbing1_id,
+                'pembimbing2_id' => $seminar->pembimbing2_id,
+                'status' => 'menunggu',
+                'pengajuan_judul_id' => $seminar->pengajuan_judul_id,
+            ]
+        );
+
+        return back()->with('success', 'Surat kesediaan seminar berhasil divalidasi dan data telah diteruskan ke pendaftaran skripsi dengan status Menunggu.');
+    }
+
     public function notifyJudul($id)
     {
         try {
@@ -1054,5 +1076,99 @@ class PortalController extends Controller
         }
 
         return $items;
+    }
+
+    public function downloadKesediaanSkripsi($id)
+    {
+        $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2'])->findOrFail($id);
+        
+        if (!$skripsi->surat_kesediaan_id) {
+            return back()->with('error', 'Surat kesediaan belum digenerate oleh staff.');
+        }
+
+        $mahasiswa = $skripsi->mahasiswa;
+        $prodi = $mahasiswa->programStudi;
+        $surat = $skripsi->suratKesediaan;
+
+        $data = [
+            'skripsi' => $skripsi,
+            'mahasiswa' => $mahasiswa,
+            'prodi' => $prodi,
+            'surat' => $surat,
+            'with_signature' => true,
+            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-sidang', $data);
+        return $pdf->download('surat_kesediaan_sidang_' . $skripsi->nim . '.pdf');
+    }
+
+    public function uploadKesediaanSkripsi(Request $request, $id)
+    {
+        $request->validate([
+            'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ]);
+
+        $skripsi = Skripsi::findOrFail($id);
+
+        if ($request->hasFile('file_kesediaan')) {
+            $path = $request->file('file_kesediaan')->store('skripsi/kesediaan', 'public');
+            $skripsi->update([
+                'file_kesediaan' => $path,
+                'is_kesediaan_valid' => false, // Reset validation if re-uploaded
+            ]);
+
+            return back()->with('success', 'Surat kesediaan berhasil diunggah. Silakan tunggu validasi dari Staff.');
+        }
+
+        return back()->with('error', 'Gagal mengunggah file.');
+    }
+
+    public function downloadUndanganSkripsi($id)
+    {
+        $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2'])->findOrFail($id);
+        
+        if (!$skripsi->is_kesediaan_valid || !$skripsi->surat_undangan_id) {
+            return back()->with('error', 'Surat undangan belum tersedia atau kesediaan belum divalidasi.');
+        }
+
+        $mahasiswa = $skripsi->mahasiswa;
+        $prodi = $mahasiswa->programStudi;
+        $surat = $skripsi->suratUndangan;
+
+        $data = [
+            'skripsi' => $skripsi,
+            'mahasiswa' => $mahasiswa,
+            'surat' => $surat,
+            'with_signature' => true,
+            'ttd_path' => $prodi->ttd_ketua_prodi,
+            'ketua_nama' => $prodi->ketuaProdi?->nama,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-undangan-sidang', $data);
+        return $pdf->download('surat_undangan_sidang_' . $skripsi->nim . '.pdf');
+    }
+
+    public function sendSkripsiNotification(Request $request, $id)
+    {
+        $skripsi = Skripsi::with('mahasiswa')->findOrFail($id);
+        $message = $request->input('message');
+
+        \App\Jobs\SendWhatsAppNotification::dispatch($skripsi, 'skripsi', $message);
+
+        return back()->with('success', 'Notifikasi WhatsApp sedang dikirim.');
+    }
+
+    public function quickValidateSkripsi(Request $request, $id)
+    {
+        $skripsi = Skripsi::findOrFail($id);
+        $skripsi->update([
+            'is_kesediaan_valid' => true,
+        ]);
+
+        return back()->with('success', 'Surat kesediaan sidang skripsi berhasil divalidasi.');
     }
 }

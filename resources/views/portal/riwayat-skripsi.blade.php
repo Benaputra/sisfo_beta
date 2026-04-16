@@ -128,22 +128,74 @@
                             </td>
                             <td style="padding: 24px;">
                                 @php
-                                    $skripsi_status = 'Menunggu'; // Minimal default
-                                    if(!empty($skripsi->toefl) && !empty($skripsi->bukti_bayar)) $skripsi_status = 'Disetujui';
+                                    $status = strtolower($skripsi->status ?? 'menunggu');
+                                    $badgeClass = match($status) {
+                                        'disetujui' => 'badge-green',
+                                        'proses' => 'badge-blue',
+                                        'ditolak' => 'badge-red',
+                                        default => 'badge-yellow',
+                                    };
+                                    $statusLabel = match($status) {
+                                        'disetujui' => 'DISETUJUI',
+                                        'proses' => 'PROSES',
+                                        'ditolak' => 'DITOLAK',
+                                        default => 'MENUNGGU',
+                                    };
                                 @endphp
-                                @if($skripsi_status == 'Disetujui')
-                                    <span class="badge badge-green" style="padding: 4px 12px;">DISETUJUI</span>
-                                @else
-                                    <span class="badge" style="background: #FFFBEB; color: #92400E; padding: 4px 12px;">MENUNGGU</span>
+                                <span class="badge {{ $badgeClass }}" style="padding: 4px 12px;">{{ $statusLabel }}</span>
+                                @if($skripsi->is_kesediaan_valid)
+                                    <div style="margin-top: 4px; font-size: 9px; color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        KESEDIAAN VALID
+                                    </div>
                                 @endif
                             </td>
                             <td style="padding: 24px; text-align: right;">
-                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                                    {{-- Student Actions --}}
+                                    @if(auth()->user()->hasRole('mahasiswa'))
+                                        @if($skripsi->canDownloadKesediaan())
+                                            <a href="{{ route('portal.skripsi.kesediaan', $skripsi->id) }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; gap: 6px;" title="Download Surat Kesediaan">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                                Kesediaan
+                                            </a>
+                                            
+                                            @if(!$skripsi->is_kesediaan_valid)
+                                                <button type="button" class="btn btn-primary" onclick="openUploadModal({{ $skripsi->id }})" style="padding: 6px 12px; font-size: 11px; gap: 6px;">
+                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                                    Unggah
+                                                </button>
+                                            @endif
+                                        @endif
+
+                                        @if($skripsi->canDownloadUndangan())
+                                            <a href="{{ route('portal.skripsi.undangan', $skripsi->id) }}" class="btn btn-primary" style="padding: 6px 12px; font-size: 11px; gap: 6px;">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                                Undangan
+                                            </a>
+                                        @endif
+                                    @endif
+
+                                    {{-- Staff Actions --}}
                                     @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
+                                        @if($skripsi->file_kesediaan && !$skripsi->is_kesediaan_valid)
+                                            <form action="{{ route('portal.skripsi.validate', $skripsi->id) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; color: var(--success); border-color: var(--success);" title="Validasi Kesediaan">
+                                                    Validasi
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        <button type="button" class="topbar-icon-btn" onclick="openNotifyModal({{ $skripsi->id }}, '{{ $skripsi->mahasiswa->nama }}')" title="Kirim WA" style="color: var(--brand); border:none; background:none; cursor:pointer;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11 8.38 8.38 0 0 1 3.8.9L21 3z"></path></svg>
+                                        </button>
+
                                         <button type="button" class="topbar-icon-btn" onclick="editSkripsi({{ $skripsi->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                         </button>
-                                        <form action="{{ route('portal.skripsi.destroy', $skripsi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                        
+                                        <form action="{{ route('portal.skripsi.destroy', $skripsi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer;">
@@ -176,71 +228,49 @@
     </div>
 
     {{-- Edit Modal --}}
-    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
-        <div class="card" style="width:100%; max-width:600px; padding:32px; background:#fff;">
+        </div>
+    </div>
+
+    {{-- Upload Modal --}}
+    <div id="uploadModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
+        <div class="card" style="width:100%; max-width:500px; padding:32px; background:#fff;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <h2 style="font-size:18px; font-weight:700;">Edit Data Skripsi</h2>
-                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
+                <h2 style="font-size:18px; font-weight:700;">Unggah Surat Kesediaan</h2>
+                <button onclick="closeUploadModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
             </div>
-            <form id="editForm" method="POST">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+                Pastikan surat sudah ditandatangani oleh Pembimbing & Penguji sebelum diunggah.
+            </p>
+            <form id="uploadForm" method="POST" enctype="multipart/form-data">
                 @csrf
-                @method('PUT')
-                <div class="form-group" style="margin-bottom:16px;">
-                    <label class="form-label">Judul Skripsi</label>
-                    <textarea name="judul" id="edit_judul" class="form-control" rows="3" required></textarea>
+                <div class="form-group" style="margin-bottom:24px;">
+                    <label class="form-label">File Surat Kesediaan (PDF/JPG/PNG)</label>
+                    <input type="file" name="file_kesediaan" class="form-control" required accept=".pdf,.jpg,.jpeg,.png">
                 </div>
-                <div class="form-row form-row-2" style="margin-bottom:16px;">
-                    <div class="form-group">
-                        <label class="form-label">Pembimbing 1</label>
-                        <select name="pembimbing1_id" id="edit_pembimbing1" class="form-control" required>
-                            @foreach($dosens as $dosen)
-                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Pembimbing 2</label>
-                        <select name="pembimbing2_id" id="edit_pembimbing2" class="form-control">
-                            <option value="">N/A</option>
-                            @foreach($dosens as $dosen)
-                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                    <button type="button" onclick="closeUploadModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">Unggah Berkas</button>
                 </div>
-                <div class="form-row form-row-2" style="margin-bottom:16px;">
-                    <div class="form-group">
-                        <label class="form-label">Penguji 1</label>
-                        <select name="penguji1_id" id="edit_penguji1" class="form-control">
-                            <option value="">N/A</option>
-                            @foreach($dosens as $dosen)
-                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Penguji 2</label>
-                        <select name="penguji2_id" id="edit_penguji2" class="form-control">
-                            <option value="">N/A</option>
-                            @foreach($dosens as $dosen)
-                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Notify Modal --}}
+    <div id="notifyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
+        <div class="card" style="width:100%; max-width:500px; padding:32px; background:#fff;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="font-size:18px; font-weight:700;">Kirim Notifikasi WA</h2>
+                <button onclick="closeNotifyModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
+            </div>
+            <form id="notifyForm" method="POST">
+                @csrf
+                <div class="form-group" style="margin-bottom:24px;">
+                    <label class="form-label">Pesan untuk <span id="notify_name" style="color: var(--brand);"></span></label>
+                    <textarea name="message" id="notify_message" class="form-control" rows="5" required></textarea>
                 </div>
-                <div class="form-row form-row-2" style="margin-bottom:16px;">
-                    <div class="form-group">
-                        <label class="form-label">Tanggal Sidang</label>
-                        <input type="date" name="tanggal" id="edit_tanggal" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Tempat</label>
-                        <input type="text" name="tempat" id="edit_tempat" class="form-control">
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                    <button type="button" onclick="closeNotifyModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">Kirim Pesan</button>
                 </div>
             </form>
         </div>
@@ -307,6 +337,39 @@
 
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
+    }
+
+    function openUploadModal(id) {
+        const modal = document.getElementById('uploadModal');
+        const form = document.getElementById('uploadForm');
+        form.action = `/portal/skripsi/${id}/kesediaan`;
+        modal.style.display = 'flex';
+    }
+
+    function closeUploadModal() {
+        document.getElementById('uploadModal').style.display = 'none';
+    }
+
+    function openNotifyModal(id, name) {
+        const modal = document.getElementById('notifyModal');
+        const form = document.getElementById('notifyForm');
+        const nameSpan = document.getElementById('notify_name');
+        const messageArea = document.getElementById('notify_message');
+        
+        form.action = `/portal/skripsi/${id}/notify`;
+        nameSpan.innerText = name;
+        
+        const hour = new Date().getHours();
+        const greeting = (hour < 12) ? 'pagi' : ((hour < 15) ? 'siang' : ((hour < 18) ? 'sore' : 'malam'));
+        const brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
+        
+        messageArea.value = `Selamat ${greeting} ${name}. ${brandText} Pendaftaran skripsi Anda sedang diproses. Mohon lengkapi berkas atau cek berkala portal Anda. Terima Kasih.`;
+        
+        modal.style.display = 'flex';
+    }
+
+    function closeNotifyModal() {
+        document.getElementById('notifyModal').style.display = 'none';
     }
 </script>
 @endpush
