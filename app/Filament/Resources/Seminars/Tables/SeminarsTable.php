@@ -30,11 +30,17 @@ class SeminarsTable
                     ->badge()
                     ->color(fn ($state) => $state === 'Terkirim' ? 'success' : 'gray'),
 
-                TextColumn::make('status_kelengkapan')
-                    ->label('Status')
-                    ->state(fn (Seminar $record) => $record->canGenerateSurat() ? 'Lengkap' : 'Belum')
+                TextColumn::make('is_kesediaan_valid')
+                    ->label('Kesediaan')
+                    ->formatStateUsing(fn ($state) => $state ? 'Valid' : 'Pending')
                     ->badge()
-                    ->color(fn ($state) => $state === 'Lengkap' ? 'success' : 'warning'),
+                    ->color(fn ($state) => $state ? 'success' : 'warning'),
+
+                TextColumn::make('status_kelengkapan')
+                    ->label('Status Undangan')
+                    ->state(fn (Seminar $record) => $record->canGenerateSurat() ? 'Siap' : 'Belum')
+                    ->badge()
+                    ->color(fn ($state) => $state === 'Siap' ? 'success' : 'warning'),
             ])
             ->filters([])
             ->recordActions([

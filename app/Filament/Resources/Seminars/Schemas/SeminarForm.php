@@ -8,6 +8,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use App\Models\Dosen;
 
 class SeminarForm
 {
@@ -42,21 +44,36 @@ class SeminarForm
 
                 Select::make('pembimbing1_id')
                     ->label('Pembimbing 1')
-                    ->relationship('pembimbing1', 'nama')
+                    ->options(fn (Get $get) => Dosen::query()
+                        ->where('id', '!=', $get('pembimbing2_id'))
+                        ->where('id', '!=', $get('penguji_seminar_id'))
+                        ->orderBy('nama')
+                        ->pluck('nama', 'id'))
                     ->searchable()
+                    ->live()
                     ->required()
                     ->disabled(fn ($record) => $record !== null && auth()->user()->hasRole('mahasiswa')),
 
                 Select::make('pembimbing2_id')
                     ->label('Pembimbing 2')
-                    ->relationship('pembimbing2', 'nama')
+                    ->options(fn (Get $get) => Dosen::query()
+                        ->where('id', '!=', $get('pembimbing1_id'))
+                        ->where('id', '!=', $get('penguji_seminar_id'))
+                        ->orderBy('nama')
+                        ->pluck('nama', 'id'))
                     ->searchable()
+                    ->live()
                     ->disabled(fn ($record) => $record !== null && auth()->user()->hasRole('mahasiswa')),
 
                 Select::make('penguji_seminar_id')
                     ->label('Penguji Seminar')
-                    ->relationship('pengujiSeminar', 'nama')
+                    ->options(fn (Get $get) => Dosen::query()
+                        ->where('id', '!=', $get('pembimbing1_id'))
+                        ->where('id', '!=', $get('pembimbing2_id'))
+                        ->orderBy('nama')
+                        ->pluck('nama', 'id'))
                     ->searchable()
+                    ->live()
                     ->disabled(fn ($record) => $record !== null && auth()->user()->hasRole('mahasiswa')),
 
                 DatePicker::make('tanggal')
@@ -80,6 +97,19 @@ class SeminarForm
                     ->directory('seminar/acc')
                     ->maxSize(3072)
                     ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png']),
+
+                FileUpload::make('file_kesediaan')
+                    ->label('File Kesediaan (Scan TTD)')
+                    ->disk('public')
+                    ->directory('seminar/kesediaan')
+                    ->maxSize(5120)
+                    ->acceptedFileTypes(['application/pdf', 'image/jpeg', 'image/png'])
+                    ->helperText('Diunggah oleh mahasiswa melalui portal'),
+
+                Toggle::make('is_kesediaan_valid')
+                    ->label('Validasi Surat Kesediaan')
+                    ->helperText('Aktifkan jika tanda tangan dosen sudah valid. Syarat untuk generate Surat Undangan.')
+                    ->visible(fn () => auth()->user()->hasAnyRole(['admin', 'staff', 'kaprodi'])),
             ]);
     }
 }

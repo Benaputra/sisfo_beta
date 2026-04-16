@@ -47,13 +47,9 @@
                 <div class="form-section-body">
                     @if($isStaff)
                         <div class="form-group">
-                            <label class="form-label">Pilih Mahasiswa</label>
-                            <select name="nim" class="form-control form-select" required>
-                                <option value="">-- Pilih Mahasiswa --</option>
-                                @foreach($mahasiswas as $m)
-                                    <option value="{{ $m->nim }}">{{ $m->nim }} - {{ $m->nama }}</option>
-                                @endforeach
-                            </select>
+                            <label class="form-label" for="mahasiswa_select">Pilih Mahasiswa</label>
+                            <select name="nim" id="mahasiswa_select" class="form-control" required placeholder="Cari NIM atau Nama Mahasiswa..."></select>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ketik minimal 1 karakter untuk mencari mahasiswa.</p>
                         </div>
                     @else
                         <div class="form-group">
@@ -179,4 +175,74 @@
         </div>
     </form>
 </div>
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+    .ts-control { border-radius: 12px !important; padding: 10px 14px !important; border: 1px solid var(--border) !important; background: var(--bg-card) !important; color: var(--text-primary) !important; transition: var(--transition) !important; }
+    .ts-wrapper.focus .ts-control { border-color: var(--brand) !important; box-shadow: 0 0 0 3px rgba(2, 195, 154, 0.12) !important; }
+    .ts-dropdown { border-radius: 12px !important; box-shadow: var(--shadow-lg) !important; background: var(--bg-card) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; margin-top: 4px !important; overflow: hidden !important; }
+    .ts-dropdown .active { background: var(--brand) !important; color: white !important; }
+    .ts-dropdown .option { padding: 10px 14px !important; }
+    .ts-dropdown .option:hover:not(.active) { background: var(--bg-page) !important; }
+    .dark-theme .ts-dropdown .option:hover:not(.active) { background: var(--border-light) !important; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    @if($isStaff)
+    new TomSelect('#mahasiswa_select', {
+        valueField: 'id',
+        labelField: 'text',
+        searchField: 'text',
+        loadThrottle: 300,
+        load: function(query, callback) {
+            if (!query.length) return callback();
+            fetch('{{ route('portal.searchMahasiswa') }}?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(json => callback(json))
+                .catch(() => callback());
+        }
+    });
+
+    const tsInstances = {};
+    document.querySelectorAll('.form-select').forEach(el => {
+        if (!el.id || el.id !== 'mahasiswa_select') {
+            const name = el.getAttribute('name');
+            tsInstances[name] = new TomSelect(el, { 
+                create: false, 
+                sortField: { field: "text", direction: "asc" },
+                onChange: function() {
+                    filterOptions();
+                }
+            });
+        }
+    });
+    @endif
+
+    function filterOptions() {
+        const val1 = tsInstances['pembimbing1_id'] ? tsInstances['pembimbing1_id'].getValue() : document.querySelector('select[name="pembimbing1_id"]')?.value;
+        const val2 = tsInstances['pembimbing2_id'] ? tsInstances['pembimbing2_id'].getValue() : document.querySelector('select[name="pembimbing2_id"]')?.value;
+
+        // If using Tom Select
+        if (tsInstances['pembimbing1_id'] && tsInstances['pembimbing2_id']) {
+            const p1 = tsInstances['pembimbing1_id'];
+            const p2 = tsInstances['pembimbing2_id'];
+
+            Object.keys(p1.options).forEach(key => {
+                if (key === val2 && key !== "") p1.updateOption(key, { ...p1.options[key], disabled: true });
+                else p1.updateOption(key, { ...p1.options[key], disabled: false });
+            });
+
+            Object.keys(p2.options).forEach(key => {
+                if (key === val1 && key !== "") p2.updateOption(key, { ...p2.options[key], disabled: true });
+                else p2.updateOption(key, { ...p2.options[key], disabled: false });
+            });
+        }
+    }
+});
+</script>
+@endpush
 @endsection

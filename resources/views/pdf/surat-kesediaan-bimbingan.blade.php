@@ -41,7 +41,7 @@
     <div class="isi-surat">
         <div class="nomor-surat">
             <h3>SURAT KESEDIAAN BIMBINGAN SKRIPSI</h3>
-            <p>Nomor: {{ $pengajuan->no_surat }}</p>
+            <p>Nomor: {{ $surat->no_surat ?? $pengajuan->no_surat }}</p>
         </div>
 
         <p>Yang bertanda tangan di bawah ini, menerangkan bahwa judul skripsi mahasiswa berikut:</p>

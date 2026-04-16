@@ -94,7 +94,7 @@ class PortalController extends Controller
         }
 
         $dosens = \App\Models\Dosen::orderBy('nama')->get();
-        $mahasiswas = $isStaff ? \App\Models\Mahasiswa::orderBy('nama')->get() : [];
+        $mahasiswas = []; // Loaded via AJAX search
         $notifications = $this->getNotifications();
         return view('portal.seminar', compact('mahasiswa', 'dosens', 'notifications', 'mahasiswas', 'isStaff'));
     }
@@ -112,10 +112,12 @@ class PortalController extends Controller
             'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
             'judul' => 'required|string',
             'pembimbing1_id' => $isStaff ? 'required|exists:dosen,id' : 'nullable|exists:dosen,id',
-            'pembimbing2_id' => 'nullable|exists:dosen,id',
+            'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
             'tanggal' => 'nullable|date',
             'tempat' => 'nullable|string',
             'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
         ]);
 
         if (!$isStaff) {
@@ -149,13 +151,19 @@ class PortalController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string',
             'pembimbing1_id' => 'required|exists:dosen,id',
-            'pembimbing2_id' => 'nullable|exists:dosen,id',
-            'penguji_seminar_id' => 'nullable|exists:dosen,id',
+            'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
+            'penguji_seminar_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id',
             'tanggal' => 'nullable|date',
             'tempat' => 'nullable|string',
             'acc_seminar' => 'required|in:Menunggu,Disetujui,Ditolak',
+            'is_kesediaan_valid' => 'nullable|boolean',
             'keterangan' => 'nullable|string',
+        ], [
+            'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
+            'penguji_seminar_id.different' => 'Penguji tidak boleh sama dengan Pembimbing 1 atau 2.',
         ]);
+
+        $validated['is_kesediaan_valid'] = $request->has('is_kesediaan_valid');
 
         if ($request->hasFile('bukti_bayar')) {
             $path = $request->file('bukti_bayar')->store('bukti_bayar_seminar', 'public');
@@ -174,8 +182,14 @@ class PortalController extends Controller
     {
         try {
             $seminar = Seminar::findOrFail($id);
+            
+            // Hapus Pengajuan Judul terkait jika ada (Cascade Manual)
+            if ($seminar->pengajuan_judul_id) {
+                PengajuanJudul::where('id', $seminar->pengajuan_judul_id)->delete();
+            }
+
             $seminar->delete();
-            return redirect()->route('portal.riwayatSeminar')->with('success', 'Data seminar berhasil dihapus.');
+            return redirect()->route('portal.riwayatSeminar')->with('success', 'Data seminar berhasil dihapus beserta data pengajuan judul terkait.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
@@ -193,7 +207,17 @@ class PortalController extends Controller
         $hour = now()->format('H');
         $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
         
-        $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . " (" . $seminar->nim . ") (" . ($mahasiswa->prodi->nama ?? '') . ") kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak. Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+        $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
+        
+        if ($seminar->canGenerateSurat()) {
+            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+        } elseif ($seminar->file_kesediaan) {
+            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Kesediaan Bimbingan Anda sedang divalidasi. Mohon cek berkala untuk mengunduh Surat Undangan Seminar jika sudah disetujui. Terima Kasih.";
+        } elseif ($seminar->canDownloadKesediaan()) {
+            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Silakan diprint dan dimintakan tanda tangan dosen pembimbing, lalu unggah kembali scan surat tersebut ke portal. Terima Kasih.";
+        } else {
+            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pendaftaran seminar Anda sedang dalam proses verifikasi staff. Terima Kasih.";
+        }
 
         $success = $waService->send($mahasiswa->no_hp, $message);
 
@@ -209,7 +233,7 @@ class PortalController extends Controller
         $seminar = Seminar::findOrFail($id);
         
         if (!$seminar->canGenerateSurat()) {
-            return back()->with('error', 'Surat belum dapat diunduh. Pastikan Pembimbing, Penguji, Bukti Bayar dan Status sudah lengkap.');
+            return back()->with('error', 'Surat belum dapat diunduh. Pastikan Pembimbing, Penguji, Bukti Bayar, Status Disetujui, dan Surat Kesediaan sudah divalidasi oleh Staff.');
         }
 
         $mahasiswa = $seminar->mahasiswa;
@@ -242,6 +266,65 @@ class PortalController extends Controller
         return $pdf->stream($filename);
     }
 
+    public function downloadKesediaanSeminar($id)
+    {
+        $seminar = Seminar::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'suratKesediaan'])->findOrFail($id);
+        
+        if (!$seminar->canDownloadKesediaan()) {
+            return back()->with('error', 'Surat kesediaan belum tersedia. Pastikan Staff sudah menentukan pembimbing & upload bukti bayar.');
+        }
+
+        $mahasiswa = $seminar->mahasiswa;
+        $prodi = $mahasiswa->programStudi;
+
+        // Find existing or create placeholder Surat record
+        $surat = $seminar->suratKesediaan;
+        if (!$surat) {
+            $surat = \App\Models\Surat::create([
+                'jenis_surat' => 'Surat Kesediaan Seminar',
+                'no_surat' => 'UN1/FP/KES-' . rand(100, 999) . '/2026',
+                'tujuan_surat' => $mahasiswa->nama,
+            ]);
+            $seminar->update(['surat_kesediaan_id' => $surat->id]);
+        }
+        
+        $data = [
+            'seminar' => $seminar,
+            'mahasiswa' => $mahasiswa,
+            'prodi' => $prodi,
+            'surat' => $surat,
+            'with_signature' => true,
+            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-seminar', $data);
+        $filename = 'surat_kesediaan_seminar_' . $seminar->nim . '.pdf';
+        
+        return $pdf->stream($filename);
+    }
+
+    public function uploadKesediaanSeminar(Request $request, $id)
+    {
+        $seminar = Seminar::findOrFail($id);
+        
+        $request->validate([
+            'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        if ($request->hasFile('file_kesediaan')) {
+            $path = $request->file('file_kesediaan')->store('seminar/kesediaan', 'public');
+            $seminar->update([
+                'file_kesediaan' => $path,
+                'is_kesediaan_valid' => false, // Reset validasi jika upload ulang
+            ]);
+            return back()->with('success', 'Surat Kesediaan Seminar berhasil diunggah. Silakan tunggu validasi dari Staff.');
+        }
+
+        return back()->with('error', 'Gagal mengunggah file.');
+    }
+
     public function skripsi()
     {
         $user = auth()->user();
@@ -261,11 +344,7 @@ class PortalController extends Controller
         }
 
         $dosens = \App\Models\Dosen::orderBy('nama')->get();
-        $mahasiswas = $isStaff 
-            ? \App\Models\Mahasiswa::whereHas('seminar', function($q) {
-                $q->where('acc_seminar', 'Disetujui');
-            })->orderBy('nama')->get() 
-            : [];
+        $mahasiswas = []; // Loaded via AJAX search
 
         $notifications = $this->getNotifications();
         $approvedJudul = !$isStaff && $mahasiswa ? PengajuanJudul::where('nim', $mahasiswa->nim)->where('status', 'disetujui')->first() : null;
@@ -286,10 +365,12 @@ class PortalController extends Controller
             'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
             'judul' => 'required|string',
             'pembimbing1_id' => 'required|exists:dosen,id',
-            'pembimbing2_id' => 'nullable|exists:dosen,id',
+            'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
             'bukti_bayar' => 'nullable|file|mimes:pdf|max:5120',
             'transkrip_nilai' => 'nullable|file|mimes:pdf|max:5120',
             'toefl' => 'nullable|file|mimes:pdf|max:5120',
+        ], [
+            'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
         ]);
 
         if (!$isStaff) {
@@ -323,11 +404,15 @@ class PortalController extends Controller
         $validated = $request->validate([
             'judul' => 'required|string',
             'pembimbing1_id' => 'required|exists:dosen,id',
-            'pembimbing2_id' => 'nullable|exists:dosen,id',
-            'penguji1_id' => 'nullable|exists:dosen,id',
-            'penguji2_id' => 'nullable|exists:dosen,id',
+            'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
+            'penguji1_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id',
+            'penguji2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id|different:penguji1_id',
             'tanggal' => 'nullable|date',
             'tempat' => 'nullable|string',
+        ], [
+            'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
+            'penguji1_id.different' => 'Penguji 1 tidak boleh sama dengan Pembimbing.',
+            'penguji2_id.different' => 'Penguji 2 tidak boleh sama dengan Pembimbing atau Penguji 1.',
         ]);
 
         try {
@@ -360,7 +445,7 @@ class PortalController extends Controller
         }
 
         $dosens = \App\Models\Dosen::orderBy('nama')->get();
-        $mahasiswas = $isStaff ? \App\Models\Mahasiswa::orderBy('nama')->get() : [];
+        $mahasiswas = []; // Loaded via AJAX search
         $notifications = $this->getNotifications();
         return view('portal.praktek-lapang', compact('mahasiswa', 'dosens', 'notifications', 'mahasiswas', 'isStaff'));
     }
@@ -495,25 +580,62 @@ class PortalController extends Controller
         return view('portal.riwayat-pengajuan-judul', compact('pengajuans', 'notifications', 'isStaff', 'hasApproved', 'hasPending', 'dosens'));
     }
 
+    public function searchMahasiswa(Request $request)
+    {
+        $search = $request->input('q');
+        $type = $request->input('type');
+
+        $query = Mahasiswa::where(function($q) use ($search) {
+            $q->where('nama', 'like', "%{$search}%")
+              ->orWhere('nim', 'like', "%{$search}%");
+        });
+
+        if ($type === 'skripsi') {
+            $query->whereHas('seminar', function($q) {
+                $q->where('acc_seminar', 'Disetujui');
+            });
+        }
+
+        $mahasiswas = $query->limit(20)->get();
+
+        $results = $mahasiswas->map(function($m) {
+            return [
+                'id' => $m->nim,
+                'text' => $m->nim . ' - ' . $m->nama
+            ];
+        });
+
+        return response()->json($results);
+    }
+
     public function storePengajuanJudul(Request $request)
     {
         $user = auth()->user();
-        $mahasiswa = $user->mahasiswa;
+        $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
 
         $request->validate([
+            'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
             'judul' => 'required|string|max:500',
-            'bukti_bayar' => ($mahasiswa && $mahasiswa->angkatan <= 2020) ? 'required|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
+        $nim = $isStaff ? $request->nim : $user->nim;
+        $mahasiswa = Mahasiswa::where('nim', $nim)->firstOrFail();
+
+        // Validation for students: must upload proof if 2020 or older
+        if (!$isStaff && $mahasiswa->angkatan <= 2020 && !$request->hasFile('bukti_bayar')) {
+            return back()->withErrors(['bukti_bayar' => 'Bukti pembayaran wajib untuk Angkatan 2020 ke bawah.'])->withInput();
+        }
+
         // Check if already submitted
-        if (PengajuanJudul::where('nim', $user->nim)->exists()) {
-            return redirect()->back()->with('error', 'Anda hanya dapat mengajukan satu judul skripsi.');
+        if (PengajuanJudul::where('nim', $nim)->exists()) {
+            return redirect()->back()->with('error', 'Mahasiswa ' . $nim . ' sudah memiliki pengajuan judul.');
         }
 
         $path = $request->hasFile('bukti_bayar') ? $request->file('bukti_bayar')->store('bukti_bayar_judul', 'public') : null;
 
         PengajuanJudul::create([
-            'nim' => $user->nim,
+            'nim' => $nim,
             'judul' => $request->judul,
             'bukti_bayar' => $path,
             'status' => 'pending',
@@ -521,6 +643,7 @@ class PortalController extends Controller
 
         return redirect()->route('portal.riwayatPengajuanJudul')->with('success', 'Judul skripsi berhasil diajukan.');
     }
+
 
     public function approvePengajuanJudul(Request $request, $id)
     {
@@ -532,21 +655,78 @@ class PortalController extends Controller
         $validated = $request->validate([
             'no_surat' => 'required|string',
             'pembimbing1_id' => 'nullable|exists:dosen,id',
-            'pembimbing2_id' => 'nullable|exists:dosen,id',
+            'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
             'keterangan' => 'nullable|string',
+        ], [
+            'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
         ]);
 
-        $pengajuan = PengajuanJudul::findOrFail($id);
+        $pengajuan = PengajuanJudul::with('mahasiswa')->findOrFail($id);
+        
+        // Create record in surats table
+        $surat = \App\Models\Surat::create([
+            'jenis_surat' => 'Surat Kesediaan Bimbingan',
+            'no_surat' => $validated['no_surat'],
+            'tujuan_surat' => $pengajuan->mahasiswa->nama,
+        ]);
+
         $pengajuan->update([
             'status' => 'disetujui',
             'no_surat' => $validated['no_surat'],
+            'surat_id' => $surat->id,
             'pembimbing1_id' => $validated['pembimbing1_id'],
             'pembimbing2_id' => $validated['pembimbing2_id'],
             'keterangan' => $validated['keterangan'],
             'surat_kesediaan' => 'generated',
         ]);
 
-        return redirect()->route('portal.riwayatPengajuanJudul')->with('success', 'Judul disetujui dan Surat Kesediaan diterbitkan.');
+        return redirect()->route('portal.riwayatPengajuanJudul')->with('success', 'Judul disetujui, Nomor Surat dicatat di sistem, dan Surat Kesediaan diterbitkan.');
+    }
+
+    public function uploadKesediaanJudul(Request $request, $id)
+    {
+        $pengajuan = PengajuanJudul::findOrFail($id);
+        
+        $request->validate([
+            'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        if ($request->hasFile('file_kesediaan')) {
+            $path = $request->file('file_kesediaan')->store('pengajuan_judul/kesediaan', 'public');
+            $pengajuan->update([
+                'file_kesediaan' => $path,
+                'is_kesediaan_valid' => false,
+            ]);
+            return back()->with('success', 'Surat kesediaan berhasil diunggah. Silakan tunggu validasi dari Staff.');
+        }
+
+        return back()->with('error', 'Gagal mengunggah file.');
+    }
+
+    public function quickValidateJudul(Request $request, $id)
+    {
+        $pengajuan = PengajuanJudul::findOrFail($id);
+        $pengajuan->update([
+            'is_kesediaan_valid' => true,
+        ]);
+
+        // Teruskan data ke tabel seminar
+        Seminar::updateOrCreate(
+            ['pengajuan_judul_id' => $pengajuan->id],
+            [
+                'nim' => $pengajuan->nim,
+                'judul' => $pengajuan->judul,
+                'pembimbing1_id' => $pengajuan->pembimbing1_id,
+                'pembimbing2_id' => $pengajuan->pembimbing2_id,
+                'acc_seminar' => 'Menunggu',
+                'bukti_bayar' => $pengajuan->bukti_bayar,
+                'is_kesediaan_valid' => true,
+                'file_kesediaan' => $pengajuan->file_kesediaan,
+                'surat_kesediaan_id' => $pengajuan->surat_id,
+            ]
+        );
+
+        return back()->with('success', 'Surat kesediaan berhasil divalidasi dan data telah diteruskan ke pendaftaran seminar dengan status Menunggu.');
     }
 
     public function notifyJudul($id)
@@ -595,9 +775,9 @@ class PortalController extends Controller
 
     public function downloadSuratKesediaan($id)
     {
-        $pengajuan = PengajuanJudul::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2'])->findOrFail($id);
+        $pengajuan = PengajuanJudul::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'surat'])->findOrFail($id);
         
-        if ($pengajuan->status !== 'disetujui' || !$pengajuan->surat_kesediaan) {
+        if ($pengajuan->status !== 'disetujui' || (!$pengajuan->surat_kesediaan && !$pengajuan->surat_id)) {
             return back()->with('error', 'Surat kesediaan belum tersedia.');
         }
 
@@ -608,6 +788,7 @@ class PortalController extends Controller
             'pengajuan' => $pengajuan,
             'mahasiswa' => $mahasiswa,
             'prodi' => $prodi,
+            'surat' => $pengajuan->surat, // Use the linked surat object
             'with_signature' => true,
             'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
             'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,

@@ -128,16 +128,38 @@
                                     </div>
                                 </div>
                             </td>
-                            <td style="padding: 16px 24px; font-size: 13px; color: var(--text-secondary);">
-                                @if($seminar->bukti_bayar)
-                                    <a href="{{ asset('storage/' . $seminar->bukti_bayar) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700;">
-                                        Bukti Bayar
-                                    </a>
-                                @else
-                                    <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700;">
-                                        Bukti Bayar
-                                    </span>
-                                @endif
+                            <td style="padding: 16px 24px; vertical-align: middle;">
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    @if($seminar->bukti_bayar)
+                                        <a href="{{ asset('storage/' . $seminar->bukti_bayar) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">
+                                            Bukti Bayar
+                                        </a>
+                                    @else
+                                        <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">
+                                            Bukti Bayar
+                                        </span>
+                                    @endif
+
+                                    @if($seminar->file_kesediaan)
+                                        <a href="{{ asset('storage/' . $seminar->file_kesediaan) }}" target="_blank" class="badge" style="background: {{ $seminar->is_kesediaan_valid ? '#D1FAE5' : '#FEF3C7' }}; color: {{ $seminar->is_kesediaan_valid ? '#065F46' : '#92400E' }}; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">
+                                            @if(auth()->user()->hasAnyRole(['admin', 'staff', 'kaprodi']))
+                                                Kesediaan: {{ $seminar->is_kesediaan_valid ? 'Valid' : 'Lihat Doc' }}
+                                            @else
+                                                Kesediaan: {{ $seminar->is_kesediaan_valid ? 'Valid' : 'Pending' }}
+                                            @endif
+                                        </a>
+                                    @else
+                                        <span class="badge" style="background: #f3f4f6; color: #6b7280; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">
+                                            Kesediaan: Belum Upload
+                                        </span>
+                                    @endif
+
+                                    @if($seminar->suratKesediaan)
+                                        <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">
+                                            No: {{ $seminar->suratKesediaan->no_surat }}
+                                        </div>
+                                    @endif
+                                </div>
                             </td>
                             <td style="padding: 16px 24px;">
                                 @if($seminar->acc_seminar == 'Disetujui')
@@ -167,11 +189,22 @@
                                 <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
                                     <div style="display: flex; gap: 8px;">
                                         @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
-                                            {{-- WhatsApp Notification Popup Trigger --}}
+                                            {{-- WhatsApp Notification --}}
                                             @php
                                                 $hour = now()->format('H');
                                                 $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
-                                                $waMessage = "Selamat {$greeting} " . ($seminar->mahasiswa->nama ?? '') . " (" . $seminar->nim . ") (" . ($seminar->mahasiswa->prodi->nama ?? '') . ") kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak. Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+                                                $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
+                                                $mahasiswaNama = $seminar->mahasiswa->nama ?? '';
+
+                                                if ($seminar->canGenerateSurat()) {
+                                                    $waMessage = "Selamat {$greeting} {$mahasiswaNama}. {$brandText} Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
+                                                } elseif ($seminar->file_kesediaan) {
+                                                    $waMessage = "Selamat {$greeting} {$mahasiswaNama}. {$brandText} Surat Kesediaan Seminar Anda sedang divalidasi. Mohon cek berkala untuk mengunduh Surat Undangan Seminar jika sudah disetujui. Terima Kasih.";
+                                                } elseif ($seminar->canDownloadKesediaan()) {
+                                                    $waMessage = "Selamat {$greeting} {$mahasiswaNama}. {$brandText} Surat Kesediaan Seminar sudah dapat diunduh di sistem. Silakan diprint dan dimintakan tanda tangan dosen pembimbing, lalu unggah kembali scan surat tersebut ke portal. Terima Kasih.";
+                                                } else {
+                                                    $waMessage = "Selamat {$greeting} {$mahasiswaNama}. {$brandText} Pendaftaran seminar Anda sedang dalam proses verifikasi staff. Terima Kasih.";
+                                                }
                                             @endphp
                                             <button type="button" class="topbar-icon-btn" onclick="openWaModal({{ $seminar->id }}, '{{ $seminar->mahasiswa->no_hp ?? '' }}', '{{ addslashes($waMessage) }}')" title="Kirim Notifikasi WA (Wablas)" style="color: #25D366; border:none; background:none; cursor:pointer; display: flex; align-items: center; justify-content: center;">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3.5l-1.5 5.5Z"></path></svg>
@@ -180,6 +213,13 @@
                                             <button type="button" class="topbar-icon-btn" onclick="editSeminar({{ $seminar->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                             </button>
+                                            
+                                            @if($seminar->file_kesediaan && !$seminar->is_kesediaan_valid)
+                                                <button type="button" class="topbar-icon-btn" onclick="quickValidate({{ $seminar->id }})" title="Validasi Cepat Surat Kesediaan" style="color: #6366F1; border:none; background:none; cursor:pointer;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                                </button>
+                                            @endif
+
                                             <form action="{{ route('portal.seminar.destroy', $seminar->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
                                                 @csrf
                                                 @method('DELETE')
@@ -191,9 +231,33 @@
                                     </div>
 
                                     @if($seminar->canGenerateSurat())
-                                        <a href="{{ route('portal.seminar.undangan', $seminar->id) }}" target="_blank" class="badge" style="background: #6366F1; color: #fff; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; text-transform: uppercase; white-space: nowrap;">
+                                        <!-- <div style="margin-bottom: 4px; font-size: 9px; color: #059669; font-weight: 700; text-transform: uppercase;">Undangan Siap:</div> -->
+                                        <a href="{{ route('portal.seminar.undangan', $seminar->id) }}" target="_blank" class="btn btn-sm" style="background: #6366F1; color: #fff; text-decoration: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 10px; text-transform: uppercase; white-space: nowrap; border: none; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);">
                                             Surat Undangan
                                         </a>
+                                    @else
+                                        <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                                            @if($seminar->canDownloadKesediaan())
+                                                @if(!$seminar->file_kesediaan)
+                                                    <div style="margin-bottom: 2px; font-size: 9px; color: var(--brand); font-weight: 700; text-transform: uppercase;">Tahap 1: TTD Kesediaan</div>
+                                                    <a href="{{ route('portal.seminar.kesediaan', $seminar->id) }}" target="_blank" class="btn btn-sm" style="background: #fff; color: var(--brand); border: 1.5px solid var(--brand); font-size: 9px; padding: 6px 10px; font-weight: 800; text-transform: uppercase; border-radius: 6px; text-align: center;">
+                                                        Download Kesediaan
+                                                    </a>
+                                                    <button type="button" onclick="openUploadModal({{ $seminar->id }})" class="btn btn-sm btn-primary" style="font-size: 9px; padding: 6px 10px; font-weight: 800; text-transform: uppercase; border-radius: 6px; text-align: center;">
+                                                        Upload Kesediaan
+                                                    </button>
+                                                @else
+                                                    @if(!$seminar->is_kesediaan_valid)
+                                                        <div style="margin-bottom: 2px; font-size: 9px; color: #D97706; font-weight: 700; text-transform: uppercase;">Tahap 2: Validasi Staff</div>
+                                                        <span style="font-size: 10px; color: var(--text-muted); background: #FEF3C7; padding: 4px 8px; border-radius: 4px; text-align: center;">Menunggu Validasi Kesediaan</span>
+                                                        <button type="button" onclick="openUploadModal({{ $seminar->id }})" class="btn btn-sm" style="font-size: 8px; color: var(--brand); text-decoration: underline; border: none; background: transparent;">Unggah Ulang?</button>
+                                                    @endif
+                                                @endif
+                                            @else
+                                                <div style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Tahap 0: Plotting</div>
+                                                <span style="font-size: 10px; color: var(--text-muted); font-style: italic; text-align: center;">Menunggu Pembimbing</span>
+                                            @endif
+                                        </div>
                                     @endif
                                 </div>
                             </td>
@@ -230,8 +294,8 @@
     </div>
 
     {{-- Edit Modal --}}
-    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
-        <div class="card" style="width:100%; max-width:600px; padding:32px; background:var(--bg-card);">
+    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:flex-start; justify-content:center; overflow-y:auto; padding: 40px 16px;">
+        <div class="card" style="width:100%; max-width:600px; padding:32px; background:var(--bg-card); margin: auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
                 <h2 style="font-size:18px; font-weight:700;">Edit Data Seminar</h2>
                 <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
@@ -291,6 +355,15 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="is_kesediaan_valid" id="edit_is_kesediaan_valid" value="1" style="width: 16px; height: 16px;">
+                            Validasi Surat Kesediaan
+                        </label>
+                        <div id="kesediaan_file_status" style="margin-top: 8px; font-size: 11px;"></div>
+                    </div>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:24px;">
+                    <div class="form-group">
                         <label class="form-label">Update Bukti Bayar (PDF/JPG)</label>
                         <input type="file" name="bukti_bayar" class="form-control">
                         <div id="current_file_status" style="margin-top: 8px; font-size: 11px;"></div>
@@ -347,10 +420,72 @@
             </div>
         </div>
     </div>
+    {{-- Upload Kesediaan Modal --}}
+    <div id="uploadKesediaanModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10002; align-items:flex-start; justify-content:center; overflow-y:auto; padding: 40px 16px;">
+        <div class="card" style="width:100%; max-width:450px; padding:32px; background:var(--bg-card); position: relative; margin: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-size:18px; font-weight:700; margin: 0;">Upload Surat Kesediaan</h2>
+                <button onclick="closeUploadModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Silakan unggah pindaian (scan) Surat Kesediaan Seminar yang telah ditandatangani oleh Dosen Pembimbing (Format: PDF/JPG/PNG).</p>
+            <form id="uploadKesediaanForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">File Surat Kesediaan</label>
+                    <input type="file" name="file_kesediaan" class="form-control" required accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                    <button type="button" onclick="closeUploadModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">Unggah Sekarang</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @push('scripts')
 <script>
+    function filterEditOptions() {
+        const p1 = document.getElementById('edit_pembimbing1');
+        const p2 = document.getElementById('edit_pembimbing2');
+        const penguji = document.getElementById('edit_penguji_seminar');
+
+        const val1 = p1.value;
+        const val2 = p2.value;
+        const valPenguji = penguji.value;
+
+        [p1, p2, penguji].forEach(select => {
+            Array.from(select.options).forEach(opt => {
+                if (opt.value === "") { opt.disabled = false; opt.style.display = 'block'; return; }
+                opt.disabled = false;
+                opt.style.display = 'block';
+            });
+        });
+
+        if (val1) {
+            [p2, penguji].forEach(s => {
+                const opt = Array.from(s.options).find(o => o.value === val1);
+                if (opt) { opt.disabled = true; opt.style.display = 'none'; }
+            });
+        }
+        if (val2) {
+            [p1, penguji].forEach(s => {
+                const opt = Array.from(s.options).find(o => o.value === val2);
+                if (opt) { opt.disabled = true; opt.style.display = 'none'; }
+            });
+        }
+        if (valPenguji) {
+            [p1, p2].forEach(s => {
+                const opt = Array.from(s.options).find(o => o.value === valPenguji);
+                if (opt) { opt.disabled = true; opt.style.display = 'none'; }
+            });
+        }
+    }
+
+    document.getElementById('edit_pembimbing1').addEventListener('change', filterEditOptions);
+    document.getElementById('edit_pembimbing2').addEventListener('change', filterEditOptions);
+    document.getElementById('edit_penguji_seminar').addEventListener('change', filterEditOptions);
+
     function editSeminar(id) {
         fetch(`/portal/seminar/${id}/edit`)
             .then(response => response.json())
@@ -361,9 +496,14 @@
                 document.getElementById('edit_pembimbing1').value = data.pembimbing1_id;
                 document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
                 document.getElementById('edit_penguji_seminar').value = data.penguji_seminar_id || '';
+                
+                // After setting values, filter
+                filterEditOptions();
+
                 document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
                 document.getElementById('edit_tempat').value = data.tempat || '';
                 document.getElementById('edit_status').value = data.acc_seminar;
+                document.getElementById('edit_is_kesediaan_valid').checked = !!data.is_kesediaan_valid;
                 document.getElementById('edit_keterangan').value = data.keterangan || '';
                 
                 const fileStatus = document.getElementById('current_file_status');
@@ -372,8 +512,49 @@
                 } else {
                     fileStatus.innerHTML = `<span style="color: #DC2626;">✘ Bukti bayar belum diupload.</span>`;
                 }
+
+                const kesediaanStatus = document.getElementById('kesediaan_file_status');
+                if (data.file_kesediaan) {
+                    kesediaanStatus.innerHTML = `<span style="color: #059669;">✔ Surat Kesediaan tersedia.</span> <a href="/storage/${data.file_kesediaan}" target="_blank" style="color: var(--brand); text-decoration: underline;">Lihat file</a>`;
+                } else {
+                    kesediaanStatus.innerHTML = `<span style="color: #6366f1;">ℹ Surat Kesediaan belum diupload mahasiswa.</span>`;
+                }
                 
                 document.getElementById('editModal').style.display = 'flex';
+            });
+    }
+
+    function quickValidate(id) {
+        if (!confirm('Apakah Anda sudah memeriksa dan menyetujui Surat Kesediaan ini?')) return;
+        
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+        formData.append('_method', 'PUT');
+        formData.append('is_kesediaan_valid', '1');
+        
+        // We need other required fields to keep them same, but our controller validates 'judul' etc.
+        // It might be better to create a specific endpoint for this, or just fetch the data first.
+        // For simplicity, let's just trigger the edit modal but maybe with a pre-submit.
+        // Actually, let's just use the edit modal fetch to get all data first.
+        fetch(`/portal/seminar/${id}/edit`)
+            .then(response => response.json())
+            .then(data => {
+                const updateData = new FormData();
+                updateData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                updateData.append('_method', 'PUT');
+                updateData.append('judul', data.judul);
+                updateData.append('pembimbing1_id', data.pembimbing1_id);
+                updateData.append('pembimbing2_id', data.pembimbing2_id || '');
+                updateData.append('penguji_seminar_id', data.penguji_seminar_id || '');
+                updateData.append('acc_seminar', data.acc_seminar);
+                updateData.append('is_kesediaan_valid', '1');
+                
+                fetch(`/portal/seminar/${id}`, {
+                    method: 'POST', // POST with _method PUT
+                    body: updateData
+                }).then(() => {
+                    location.reload();
+                });
             });
     }
 
@@ -417,7 +598,6 @@
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRquire': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
         })
@@ -438,6 +618,18 @@
             btn.disabled = false;
             btnText.innerText = 'Kirim Sekarang';
         });
+    }
+
+    // Upload Kesediaan Functions
+    function openUploadModal(id) {
+        currentSeminarId = id;
+        const form = document.getElementById('uploadKesediaanForm');
+        form.action = `/portal/seminar/${id}/kesediaan`;
+        document.getElementById('uploadKesediaanModal').style.display = 'flex';
+    }
+
+    function closeUploadModal() {
+        document.getElementById('uploadKesediaanModal').style.display = 'none';
     }
 </script>
 @endpush

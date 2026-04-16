@@ -6,6 +6,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use App\Models\Dosen;
 
 class PengajuanJudulForm
 {
@@ -35,12 +37,18 @@ class PengajuanJudulForm
                     ->columnSpanFull(),
                 Select::make('pembimbing1_id')
                     ->label('Pembimbing 1')
-                    ->relationship('pembimbing1', 'nama')
-                    ->searchable(),
+                    ->options(fn (Get $get) => Dosen::query()
+                        ->where('id', '!=', $get('pembimbing2_id'))
+                        ->pluck('nama', 'id'))
+                    ->searchable()
+                    ->live(),
                 Select::make('pembimbing2_id')
                     ->label('Pembimbing 2')
-                    ->relationship('pembimbing2', 'nama')
-                    ->searchable(),
+                    ->options(fn (Get $get) => Dosen::query()
+                        ->where('id', '!=', $get('pembimbing1_id'))
+                        ->pluck('nama', 'id'))
+                    ->searchable()
+                    ->live(),
             ]);
     }
 }

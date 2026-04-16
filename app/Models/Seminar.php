@@ -13,6 +13,7 @@ class Seminar extends Model
     protected $table = 'seminar';
 
     protected $fillable = [
+        'pengajuan_judul_id',
         'nim',
         'judul',
         'pembimbing1_id',
@@ -22,14 +23,26 @@ class Seminar extends Model
         'tempat',
         'bukti_bayar',
         'acc_seminar',
+        'file_kesediaan',
+        'is_kesediaan_valid',
+        'surat_kesediaan_id',
         'surat_undangan_id',
         'notifikasi_whatsapp',
         'keterangan',
     ];
 
+    /**
+     * Relasi ke Pengajuan Judul
+     */
+    public function pengajuanJudul(): BelongsTo
+    {
+        return $this->belongsTo(PengajuanJudul::class, 'pengajuan_judul_id');
+    }
+
     protected $casts = [
         'tanggal' => 'date',
         'notifikasi_whatsapp' => 'boolean',
+        'is_kesediaan_valid' => 'boolean',
     ];
 
     /**
@@ -49,8 +62,26 @@ class Seminar extends Model
     }
 
     /**
+     * Relasi ke Surat Kesediaan
+     */
+    public function suratKesediaan(): BelongsTo
+    {
+        return $this->belongsTo(Surat::class, 'surat_kesediaan_id');
+    }
+
+    /**
+     * Cek apakah surat kesediaan seminar bisa diunduh.
+     * Syarat: Pembimbing 1 dan Bukti Bayar sudah diisi oleh staff.
+     */
+    public function canDownloadKesediaan(): bool
+    {
+        return !empty($this->pembimbing1_id) 
+            && !empty($this->bukti_bayar);
+    }
+
+    /**
      * Cek kelengkapan data untuk generate surat undangan seminar
-     * Syarat: Pembimbing 1 & 2, Penguji, Bukti Bayar, dan Status Disetujui.
+     * Syarat baru: Surat Kesediaan harus sudah di-upload dan divalidasi oleh staff.
      */
     public function canGenerateSurat(): bool
     {
@@ -58,7 +89,8 @@ class Seminar extends Model
             && !empty($this->bukti_bayar)
             && !empty($this->pembimbing1_id)
             && !empty($this->pembimbing2_id)
-            && !empty($this->penguji_seminar_id);
+            && !empty($this->penguji_seminar_id)
+            && $this->is_kesediaan_valid; // Ditambahkan syarat validasi kesediaan
     }
 
     // --- Relasi Dosen ---

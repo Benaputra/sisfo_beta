@@ -249,6 +249,41 @@
 
 @push('scripts')
 <script>
+    function filterSkripsiEditOptions() {
+        const p1 = document.getElementById('edit_pembimbing1');
+        const p2 = document.getElementById('edit_pembimbing2');
+        const penguji1 = document.getElementById('edit_penguji1');
+        const penguji2 = document.getElementById('edit_penguji2');
+
+        const selectors = [p1, p2, penguji1, penguji2];
+        const values = selectors.map(s => s.value);
+
+        // Reset
+        selectors.forEach(select => {
+            Array.from(select.options).forEach(opt => {
+                opt.disabled = false;
+                opt.style.display = 'block';
+            });
+        });
+
+        // Disable
+        selectors.forEach((select, index) => {
+            const currentVal = values[index];
+            if (currentVal && currentVal !== "") {
+                selectors.forEach((otherSelect, otherIndex) => {
+                    if (index !== otherIndex) {
+                        const opt = Array.from(otherSelect.options).find(o => o.value === currentVal);
+                        if (opt) { opt.disabled = true; opt.style.display = 'none'; }
+                    }
+                });
+            }
+        });
+    }
+
+    ['edit_pembimbing1', 'edit_pembimbing2', 'edit_penguji1', 'edit_penguji2'].forEach(id => {
+        document.getElementById(id).addEventListener('change', filterSkripsiEditOptions);
+    });
+
     function editSkripsi(id) {
         fetch(`/portal/skripsi/${id}/edit`)
             .then(response => response.json())
@@ -260,6 +295,9 @@
                 document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
                 document.getElementById('edit_penguji1').value = data.penguji1_id || '';
                 document.getElementById('edit_penguji2').value = data.penguji2_id || '';
+                
+                filterSkripsiEditOptions();
+
                 document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
                 document.getElementById('edit_tempat').value = data.tempat || '';
                 

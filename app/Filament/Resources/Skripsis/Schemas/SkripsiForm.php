@@ -7,6 +7,8 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use App\Models\Dosen;
 
 class SkripsiForm
 {
@@ -20,10 +22,47 @@ class SkripsiForm
                 ->searchable()
                 ->required(),
             TextInput::make('judul')->required()->maxLength(65535),
-            Select::make('pembimbing1_id')->label('Pembimbing 1')->relationship('pembimbing1', 'nama')->searchable()->required(),
-            Select::make('pembimbing2_id')->label('Pembimbing 2')->relationship('pembimbing2', 'nama')->searchable(),
-            Select::make('penguji1_id')->label('Penguji 1')->relationship('penguji1', 'nama')->searchable(),
-            Select::make('penguji2_id')->label('Penguji 2')->relationship('penguji2', 'nama')->searchable(),
+            Select::make('pembimbing1_id')
+                ->label('Pembimbing 1')
+                ->options(fn (Get $get) => Dosen::query()
+                    ->where('id', '!=', $get('pembimbing2_id'))
+                    ->where('id', '!=', $get('penguji1_id'))
+                    ->where('id', '!=', $get('penguji2_id'))
+                    ->orderBy('nama')
+                    ->pluck('nama', 'id'))
+                ->searchable()
+                ->live()
+                ->required(),
+            Select::make('pembimbing2_id')
+                ->label('Pembimbing 2')
+                ->options(fn (Get $get) => Dosen::query()
+                    ->where('id', '!=', $get('pembimbing1_id'))
+                    ->where('id', '!=', $get('penguji1_id'))
+                    ->where('id', '!=', $get('penguji2_id'))
+                    ->orderBy('nama')
+                    ->pluck('nama', 'id'))
+                ->searchable()
+                ->live(),
+            Select::make('penguji1_id')
+                ->label('Penguji 1')
+                ->options(fn (Get $get) => Dosen::query()
+                    ->where('id', '!=', $get('pembimbing1_id'))
+                    ->where('id', '!=', $get('pembimbing2_id'))
+                    ->where('id', '!=', $get('penguji2_id'))
+                    ->orderBy('nama')
+                    ->pluck('nama', 'id'))
+                ->searchable()
+                ->live(),
+            Select::make('penguji2_id')
+                ->label('Penguji 2')
+                ->options(fn (Get $get) => Dosen::query()
+                    ->where('id', '!=', $get('pembimbing1_id'))
+                    ->where('id', '!=', $get('pembimbing2_id'))
+                    ->where('id', '!=', $get('penguji1_id'))
+                    ->orderBy('nama')
+                    ->pluck('nama', 'id'))
+                ->searchable()
+                ->live(),
             DatePicker::make('tanggal')->required(),
             TextInput::make('tempat')->required(),
             FileUpload::make('bukti_bayar')->disk('public')->directory('skripsi/bukti'),

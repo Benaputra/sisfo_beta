@@ -24,6 +24,8 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::put('/seminar/{id}', [PortalController::class, 'updateSeminar'])->name('seminar.update');
     Route::delete('/seminar/{id}', [PortalController::class, 'destroySeminar'])->name('seminar.destroy');
     Route::get('/seminar/{id}/undangan', [PortalController::class, 'downloadUndanganSeminar'])->name('seminar.undangan');
+    Route::get('/seminar/{id}/kesediaan', [PortalController::class, 'downloadKesediaanSeminar'])->name('seminar.kesediaan');
+    Route::post('/seminar/{id}/kesediaan', [PortalController::class, 'uploadKesediaanSeminar'])->name('seminar.kesediaan.upload');
     Route::post('/seminar/{id}/notify', [PortalController::class, 'sendSeminarNotification'])->name('seminar.notify');
 
     // Skripsi
@@ -40,6 +42,9 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::get('/riwayat-pengajuan-judul', [PortalController::class, 'riwayatPengajuanJudul'])->name('riwayatPengajuanJudul');
     Route::post('/pengajuan-judul/{id}/approve', [PortalController::class, 'approvePengajuanJudul'])->name('pengajuanJudul.approve');
     Route::get('/pengajuan-judul/{id}/download-surat', [PortalController::class, 'downloadSuratKesediaan'])->name('pengajuanJudul.downloadSurat');
+    Route::post('/pengajuan-judul/{id}/kesediaan', [PortalController::class, 'uploadKesediaanJudul'])->name('pengajuanJudul.kesediaan.upload');
+    Route::post('/pengajuan-judul/{id}/validate', [PortalController::class, 'quickValidateJudul'])->name('pengajuanJudul.validate');
+    Route::get('/pengajuan-judul/{id}/undangan', [PortalController::class, 'downloadUndanganSeminarJudul'])->name('pengajuanJudul.undangan');
     Route::post('/pengajuan-judul/{id}/notify', [PortalController::class, 'notifyJudul'])->name('pengajuanJudul.notify');
     Route::delete('/pengajuan-judul/{id}', [PortalController::class, 'destroyPengajuanJudul'])->name('pengajuanJudul.destroy');
 
@@ -58,4 +63,7 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::get('/riwayat-surat', [PortalController::class, 'riwayatSurat'])->name('riwayatSurat');
     Route::post('/surat', [PortalController::class, 'storeSurat'])->name('surat.store');
     Route::get('/surat/{id}', [PortalController::class, 'viewSurat'])->name('surat.view');
+
+    // AJAX Search
+    Route::get('/search-mahasiswa', [PortalController::class, 'searchMahasiswa'])->name('searchMahasiswa');
 });

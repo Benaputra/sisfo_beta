@@ -121,25 +121,74 @@
     </div>
 </div>
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <style>
+        .ts-control { border-radius: 12px !important; padding: 10px 14px !important; border: 1px solid var(--border) !important; background: var(--bg-card) !important; color: var(--text-primary) !important; transition: var(--transition) !important; }
+        .ts-wrapper.focus .ts-control { border-color: var(--brand) !important; box-shadow: 0 0 0 3px rgba(2, 195, 154, 0.12) !important; }
+        .ts-dropdown { border-radius: 12px !important; box-shadow: var(--shadow-lg) !important; background: var(--bg-card) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; margin-top: 4px !important; overflow: hidden !important; }
+        .ts-dropdown .active { background: var(--brand) !important; color: white !important; }
+        .ts-dropdown .option { padding: 10px 14px !important; }
+        .ts-dropdown .option:hover:not(.active) { background: var(--bg-page) !important; }
+        .dark-theme .ts-dropdown .option:hover:not(.active) { background: var(--border-light) !important; }
+    </style>
+@endpush
+
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Searchable Student Select
-            if (document.getElementById('nim-select')) {
-                new TomSelect('#nim-select', {
-                    create: false,
-                    sortField: { field: "text", direction: "asc" }
-                });
-            }
+            @if($isStaff)
+            // Searchable Student Select (AJAX)
+            new TomSelect('#nim-select', {
+                valueField: 'id',
+                labelField: 'text',
+                searchField: 'text',
+                loadThrottle: 300,
+                load: function(query, callback) {
+                    if (!query.length) return callback();
+                    fetch('{{ route('portal.searchMahasiswa') }}?type=skripsi&q=' + encodeURIComponent(query))
+                        .then(response => response.json())
+                        .then(json => callback(json))
+                        .catch(() => callback());
+                }
+            });
+            @endif
+            
+            const tsInstances = {};
             
             // Searchable Dosen Selects
             document.querySelectorAll('.ts-select').forEach(el => {
-                new TomSelect(el, {
+                const name = el.getAttribute('name');
+                tsInstances[name] = new TomSelect(el, {
                     create: false,
-                    sortField: { field: "text", direction: "asc" }
+                    sortField: { field: "text", direction: "asc" },
+                    onChange: function() {
+                        filterOptions();
+                    }
                 });
             });
+
+            function filterOptions() {
+                const val1 = tsInstances['pembimbing1_id'] ? tsInstances['pembimbing1_id'].getValue() : null;
+                const val2 = tsInstances['pembimbing2_id'] ? tsInstances['pembimbing2_id'].getValue() : null;
+
+                if (tsInstances['pembimbing1_id']) {
+                    const control = tsInstances['pembimbing1_id'];
+                    Object.keys(control.options).forEach(key => {
+                        if (key === val2 && key !== "") control.updateOption(key, { ...control.options[key], disabled: true });
+                        else control.updateOption(key, { ...control.options[key], disabled: false });
+                    });
+                }
+
+                if (tsInstances['pembimbing2_id']) {
+                    const control = tsInstances['pembimbing2_id'];
+                    Object.keys(control.options).forEach(key => {
+                        if (key === val1 && key !== "") control.updateOption(key, { ...control.options[key], disabled: true });
+                        else control.updateOption(key, { ...control.options[key], disabled: false });
+                    });
+                }
+            }
         });
     </script>
 @endpush

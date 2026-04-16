@@ -40,14 +40,50 @@
                         </div>
                         <div class="form-section-body">
                             <div class="form-group">
-                                <label class="form-label">Pilih Mahasiswa</label>
-                                <select name="nim" class="form-control form-select" required>
-                                    <option value="">-- Pilih Mahasiswa --</option>
-                                    @foreach($mahasiswas as $m)
-                                        <option value="{{ $m->nim }}">{{ $m->nim }} - {{ $m->nama }}</option>
-                                    @endforeach
-                                </select>
+                                <label class="form-label" for="mahasiswa_select">Pilih Mahasiswa</label>
+                                <select name="nim" id="mahasiswa_select" class="form-control" required placeholder="Cari NIM atau Nama Mahasiswa..."></select>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ketik minimal 1 karakter untuk mencari mahasiswa.</p>
                             </div>
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<style>
+    .ts-control { border-radius: 12px !important; padding: 10px 14px !important; border: 1px solid var(--border) !important; background: var(--bg-card) !important; color: var(--text-primary) !important; transition: var(--transition) !important; }
+    .ts-wrapper.focus .ts-control { border-color: var(--brand) !important; box-shadow: 0 0 0 3px rgba(2, 195, 154, 0.12) !important; }
+    .ts-dropdown { border-radius: 12px !important; box-shadow: var(--shadow-lg) !important; background: var(--bg-card) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; margin-top: 4px !important; overflow: hidden !important; }
+    .ts-dropdown .active { background: var(--brand) !important; color: white !important; }
+    .ts-dropdown .option { padding: 10px 14px !important; }
+    .ts-dropdown .option:hover:not(.active) { background: var(--bg-page) !important; }
+    .dark-theme .ts-dropdown .option:hover:not(.active) { background: var(--border-light) !important; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    @if($isStaff)
+    new TomSelect('#mahasiswa_select', {
+        valueField: 'id',
+        labelField: 'text',
+        searchField: 'text',
+        loadThrottle: 300,
+        load: function(query, callback) {
+            if (!query.length) return callback();
+            fetch('{{ route('portal.searchMahasiswa') }}?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(json => callback(json))
+                .catch(() => callback());
+        }
+    });
+
+    // Also make Advisors searchable
+    document.querySelectorAll('.form-select').forEach(el => {
+        new TomSelect(el, { create: false, sortField: { field: "text", direction: "asc" } });
+    });
+    @endif
+});
+</script>
+@endpush
                         </div>
                     </div>
                 @endif
