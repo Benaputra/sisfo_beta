@@ -10,14 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('pengajuan_juduls', function (Blueprint $table) {
-            if (!Schema::hasColumn('pengajuan_juduls', 'pembimbing1_id')) {
+        Schema::table('pengajuan_judul', function (Blueprint $table) {
+            if (!Schema::hasColumn('pengajuan_judul', 'pembimbing1_id')) {
                 $table->unsignedBigInteger('pembimbing1_id')->nullable();
-                $table->foreign('pembimbing1_id')->references('id')->on('dosens')->onDelete('set null');
+                $table->foreign('pembimbing1_id')->references('id')->on('dosen')->onDelete('set null');
             }
-            if (!Schema::hasColumn('pengajuan_juduls', 'pembimbing2_id')) {
+            if (!Schema::hasColumn('pengajuan_judul', 'pembimbing2_id')) {
                 $table->unsignedBigInteger('pembimbing2_id')->nullable();
-                $table->foreign('pembimbing2_id')->references('id')->on('dosens')->onDelete('set null');
+                $table->foreign('pembimbing2_id')->references('id')->on('dosen')->onDelete('set null');
             }
         });
     }

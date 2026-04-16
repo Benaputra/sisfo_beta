@@ -109,7 +109,7 @@ class PortalController extends Controller
         }
 
         $validated = $request->validate([
-            'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
+            'nim' => $isStaff ? 'required|exists:mahasiswa,nim' : 'nullable',
             'judul' => 'required|string',
             'pembimbing1_id' => $isStaff ? 'required|exists:dosen,id' : 'nullable|exists:dosen,id',
             'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
@@ -362,7 +362,7 @@ class PortalController extends Controller
         }
 
         $validated = $request->validate([
-            'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
+            'nim' => $isStaff ? 'required|exists:mahasiswa,nim' : 'nullable',
             'judul' => 'required|string',
             'pembimbing1_id' => 'required|exists:dosen,id',
             'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
@@ -460,7 +460,7 @@ class PortalController extends Controller
         }
 
         $validated = $request->validate([
-            'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
+            'nim' => $isStaff ? 'required|exists:mahasiswa,nim' : 'nullable',
             'lokasi' => 'required|string',
             'dosen_pembimbing_id' => 'required|exists:dosen,id',
             'bukti_bayar' => 'nullable|file|mimes:pdf|max:5120',
@@ -614,7 +614,7 @@ class PortalController extends Controller
         $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
 
         $request->validate([
-            'nim' => $isStaff ? 'required|exists:mahasiswas,nim' : 'nullable',
+            'nim' => $isStaff ? 'required|exists:mahasiswa,nim' : 'nullable',
             'judul' => 'required|string|max:500',
             'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
@@ -792,6 +792,41 @@ class PortalController extends Controller
             return redirect()->route('portal.riwayatPengajuanJudul')->with('success', 'Data pengajuan judul berhasil dihapus.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
+    }
+
+    public function editPengajuanJudul($id)
+    {
+        $pengajuan = PengajuanJudul::findOrFail($id);
+        return response()->json($pengajuan);
+    }
+
+    public function updatePengajuanJudul(Request $request, $id)
+    {
+        $pengajuan = PengajuanJudul::findOrFail($id);
+        $user = auth()->user();
+        $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
+
+        // Students can only edit if still pending
+        if (!$isStaff && $pengajuan->status !== 'pending') {
+            return back()->with('error', 'Pengajuan yang sudah diproses tidak dapat diubah.');
+        }
+
+        $validated = $request->validate([
+            'judul' => 'required|string|max:500',
+            'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        if ($request->hasFile('bukti_bayar')) {
+            $path = $request->file('bukti_bayar')->store('bukti_bayar_judul', 'public');
+            $validated['bukti_bayar'] = $path;
+        }
+
+        try {
+            $pengajuan->update($validated);
+            return redirect()->route('portal.riwayatPengajuanJudul')->with('success', 'Data pengajuan judul berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
         }
     }
 

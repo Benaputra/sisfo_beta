@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('pengajuan_juduls', function (Blueprint $table) {
+        Schema::table('pengajuan_judul', function (Blueprint $table) {
             $table->string('file_kesediaan')->nullable()->after('surat_kesediaan');
             $table->boolean('is_kesediaan_valid')->default(false)->after('file_kesediaan');
         });
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('pengajuan_juduls', function (Blueprint $table) {
+        Schema::table('pengajuan_judul', function (Blueprint $table) {
             $table->dropColumn(['file_kesediaan', 'is_kesediaan_valid']);
         });
     }

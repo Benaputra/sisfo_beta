@@ -117,6 +117,10 @@
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3.5l-1.5 5.5Z"></path></svg>
                                         </button>
 
+                                        <button type="button" class="topbar-icon-btn" onclick="editJudul({{ $p->id }})" title="Edit Pengajuan" style="color: #6366F1; width: 32px; height: 32px; border: none; background: #EEF2FF;">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+
                                         <form action="{{ route('portal.pengajuanJudul.destroy', $p->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')" style="display: inline;">
                                             @csrf
                                             @method('DELETE')
@@ -124,6 +128,12 @@
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                             </button>
                                         </form>
+                                    @endif
+
+                                    @if(!$isStaff && $p->status == 'pending')
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="editJudul({{ $p->id }})" style="font-size: 11px; padding: 6px 14px;">
+                                            Edit
+                                        </button>
                                     @endif
 
                                     @if($isStaff && $p->status == 'pending')
@@ -258,6 +268,35 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal()">Batal</button>
                 <button type="submit" class="btn btn-primary">Setujui & Terbitkan Surat</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Modal Edit Judul --}}
+<div id="modalEditJudul" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Pengajuan Judul</h3>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+        <form id="formEditJudul" action="" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label">Judul Skripsi</label>
+                    <textarea name="judul" id="editJudulTextarea" class="form-control" rows="4" required maxlength="500"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bukti Pembayaran (Baru)</label>
+                    <input type="file" name="bukti_bayar" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Kosongkan jika tidak ingin mengubah bukti bayar.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
             </div>
         </form>
     </div>
@@ -429,10 +468,26 @@
         if(modal) modal.style.display = 'none';
     }
 
+    function editJudul(id) {
+        fetch(`/portal/pengajuan-judul/${id}/edit`)
+            .then(response => response.json())
+            .then(data => {
+                const formEdit = document.getElementById('formEditJudul');
+                formEdit.action = `/portal/pengajuan-judul/${id}`;
+                document.getElementById('editJudulTextarea').value = data.judul;
+                document.getElementById('modalEditJudul').style.display = 'flex';
+            });
+    }
+
+    function closeEditModal() {
+        document.getElementById('modalEditJudul').style.display = 'none';
+    }
+
     window.onclick = function(e) {
         if (e.target === modal) closeModal();
         if (e.target === waModal) closeWaModal();
         if (e.target === document.getElementById('modalUpload')) closeUploadModal();
+        if (e.target === document.getElementById('modalEditJudul')) closeEditModal();
     };
 </script>
 @endpush

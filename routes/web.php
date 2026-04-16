@@ -52,6 +52,8 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::post('/pengajuan-judul/{id}/validate', [PortalController::class, 'quickValidateJudul'])->name('pengajuanJudul.validate');
     Route::get('/pengajuan-judul/{id}/undangan', [PortalController::class, 'downloadUndanganSeminarJudul'])->name('pengajuanJudul.undangan');
     Route::post('/pengajuan-judul/{id}/notify', [PortalController::class, 'notifyJudul'])->name('pengajuanJudul.notify');
+    Route::get('/pengajuan-judul/{id}/edit', [PortalController::class, 'editPengajuanJudul'])->name('pengajuanJudul.edit');
+    Route::put('/pengajuan-judul/{id}', [PortalController::class, 'updatePengajuanJudul'])->name('pengajuanJudul.update');
     Route::delete('/pengajuan-judul/{id}', [PortalController::class, 'destroyPengajuanJudul'])->name('pengajuanJudul.destroy');
 
     // Praktek Lapang

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('surat_kesediaan_id')->nullable()->after('status')->constrained('surats')->nullOnDelete();
             $table->string('file_kesediaan')->nullable()->after('surat_kesediaan_id');
             $table->boolean('is_kesediaan_valid')->default(false)->after('file_kesediaan');
-            $table->foreignId('pengajuan_judul_id')->nullable()->after('is_kesediaan_valid')->constrained('pengajuan_juduls')->nullOnDelete();
+            $table->foreignId('pengajuan_judul_id')->nullable()->after('is_kesediaan_valid')->constrained('pengajuan_judul')->nullOnDelete();
         });
     }
 

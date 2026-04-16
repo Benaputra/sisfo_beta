@@ -4,15 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         Schema::table('seminar', function (Blueprint $table) {
-            $table->foreignId('pengajuan_judul_id')->nullable()->after('nim')->constrained('pengajuan_juduls')->nullOnDelete();
+            $table->foreignId('pengajuan_judul_id')->nullable()->after('nim')->constrained('pengajuan_judul')->nullOnDelete();
         });
     }
 
