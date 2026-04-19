@@ -710,7 +710,7 @@ class PortalController extends Controller
             'is_kesediaan_valid' => true,
         ]);
 
-        // Teruskan data ke tabel seminar
+        // Teruskan data ke tabel seminar (hanya nim, judul, dan pembimbing)
         Seminar::updateOrCreate(
             ['pengajuan_judul_id' => $pengajuan->id],
             [
@@ -719,10 +719,6 @@ class PortalController extends Controller
                 'pembimbing1_id' => $pengajuan->pembimbing1_id,
                 'pembimbing2_id' => $pengajuan->pembimbing2_id,
                 'acc_seminar' => 'Menunggu',
-                'bukti_bayar' => $pengajuan->bukti_bayar,
-                'is_kesediaan_valid' => true,
-                'file_kesediaan' => $pengajuan->file_kesediaan,
-                'surat_kesediaan_id' => $pengajuan->surat_id,
             ]
         );
 
