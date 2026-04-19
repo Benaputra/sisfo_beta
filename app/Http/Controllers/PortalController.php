@@ -103,7 +103,7 @@ class PortalController extends Controller
     {
         $user = auth()->user();
         $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
-        
+
         if (!$user->nim && !$isStaff) {
             return back()->with('error', 'Hanya mahasiswa dengan NIM yang dapat mendaftar.');
         }
@@ -147,7 +147,7 @@ class PortalController extends Controller
     public function updateSeminar(Request $request, $id)
     {
         $seminar = Seminar::findOrFail($id);
-        
+
         $validated = $request->validate([
             'judul' => 'required|string',
             'pembimbing1_id' => 'required|exists:dosen,id',
@@ -182,7 +182,7 @@ class PortalController extends Controller
     {
         try {
             $seminar = Seminar::findOrFail($id);
-            
+
             // Hapus Pengajuan Judul terkait jika ada (Cascade Manual)
             if ($seminar->pengajuan_judul_id) {
                 PengajuanJudul::where('id', $seminar->pengajuan_judul_id)->delete();
@@ -199,16 +199,16 @@ class PortalController extends Controller
     {
         $seminar = Seminar::findOrFail($id);
         $mahasiswa = $seminar->mahasiswa;
-        
+
         if (!$mahasiswa || !$mahasiswa->no_hp) {
             return response()->json(['success' => false, 'message' => 'Mahasiswa atau nomor HP tidak ditemukan.']);
         }
 
         $hour = now()->format('H');
         $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
-        
+
         $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
-        
+
         if ($seminar->canGenerateSurat()) {
             $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
         } elseif ($seminar->file_kesediaan) {
@@ -231,18 +231,18 @@ class PortalController extends Controller
     public function downloadUndanganSeminar($id)
     {
         $seminar = Seminar::findOrFail($id);
-        
+
         if (!$seminar->canGenerateSurat()) {
             return back()->with('error', 'Surat belum dapat diunduh. Pastikan Pembimbing, Penguji, Bukti Bayar, Status Disetujui, dan Surat Kesediaan sudah divalidasi oleh Staff.');
         }
 
         $mahasiswa = $seminar->mahasiswa;
         $prodi = $mahasiswa->programStudi;
-        
+
         // Find existing or create placeholder Surat record
         $surat = $seminar->suratUndangan;
         if (!$surat) {
-            $surat = \App\Models\Surat::create([
+            $surat = Surat::create([
                 'jenis_surat' => 'Undangan Seminar',
                 'no_surat' => 'UN1/FP/STUDI-' . rand(100, 999) . '/2026',
                 'tujuan_surat' => $mahasiswa->nama,
@@ -262,14 +262,14 @@ class PortalController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-undangan-seminar', $data);
         $filename = 'surat_undangan_' . $seminar->nim . '.pdf';
-        
+
         return $pdf->stream($filename);
     }
 
     public function downloadKesediaanSeminar($id)
     {
         $seminar = Seminar::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'suratKesediaan'])->findOrFail($id);
-        
+
         if (!$seminar->canDownloadKesediaan()) {
             return back()->with('error', 'Surat kesediaan belum tersedia. Pastikan Staff sudah menentukan pembimbing & upload bukti bayar.');
         }
@@ -280,14 +280,14 @@ class PortalController extends Controller
         // Find existing or create placeholder Surat record
         $surat = $seminar->suratKesediaan;
         if (!$surat) {
-            $surat = \App\Models\Surat::create([
+            $surat = Surat::create([
                 'jenis_surat' => 'Surat Kesediaan Seminar',
                 'no_surat' => 'UN1/FP/KES-' . rand(100, 999) . '/2026',
                 'tujuan_surat' => $mahasiswa->nama,
             ]);
             $seminar->update(['surat_kesediaan_id' => $surat->id]);
         }
-        
+
         $data = [
             'seminar' => $seminar,
             'mahasiswa' => $mahasiswa,
@@ -301,14 +301,14 @@ class PortalController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-seminar', $data);
         $filename = 'surat_kesediaan_seminar_' . $seminar->nim . '.pdf';
-        
+
         return $pdf->stream($filename);
     }
 
     public function uploadKesediaanSeminar(Request $request, $id)
     {
         $seminar = Seminar::findOrFail($id);
-        
+
         $request->validate([
             'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
@@ -348,7 +348,7 @@ class PortalController extends Controller
 
         $notifications = $this->getNotifications();
         $approvedJudul = !$isStaff && $mahasiswa ? PengajuanJudul::where('nim', $mahasiswa->nim)->where('status', 'disetujui')->first() : null;
-        
+
         return view('portal.skripsi', compact('mahasiswa', 'dosens', 'notifications', 'mahasiswas', 'isStaff', 'approvedJudul'));
     }
 
@@ -356,7 +356,7 @@ class PortalController extends Controller
     {
         $user = auth()->user();
         $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
-        
+
         if (!$user->nim && !$isStaff) {
             return back()->with('error', 'Hanya mahasiswa dengan NIM yang dapat mendaftar.');
         }
@@ -377,7 +377,7 @@ class PortalController extends Controller
             $validated['nim'] = $user->nim;
         }
 
-        foreach(['bukti_bayar', 'transkrip_nilai', 'toefl'] as $fileField) {
+        foreach (['bukti_bayar', 'transkrip_nilai', 'toefl'] as $fileField) {
             if ($request->hasFile($fileField)) {
                 $path = $request->file($fileField)->store('skripsi_files', 'public');
                 $validated[$fileField] = $path;
@@ -454,7 +454,7 @@ class PortalController extends Controller
     {
         $user = auth()->user();
         $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
-        
+
         if (!$user->nim && !$isStaff) {
             return back()->with('error', 'Hanya mahasiswa dengan NIM yang dapat mendaftar.');
         }
@@ -537,11 +537,11 @@ class PortalController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
-                  ->orWhereHas('mahasiswa', function($mq) use ($search) {
-                      $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('mahasiswa', function ($mq) use ($search) {
+                        $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -564,11 +564,11 @@ class PortalController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
-                  ->orWhereHas('mahasiswa', function($mq) use ($search) {
-                      $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('mahasiswa', function ($mq) use ($search) {
+                        $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -585,20 +585,20 @@ class PortalController extends Controller
         $search = $request->input('q');
         $type = $request->input('type');
 
-        $query = Mahasiswa::where(function($q) use ($search) {
+        $query = Mahasiswa::where(function ($q) use ($search) {
             $q->where('nama', 'like', "%{$search}%")
-              ->orWhere('nim', 'like', "%{$search}%");
+                ->orWhere('nim', 'like', "%{$search}%");
         });
 
         if ($type === 'skripsi') {
-            $query->whereHas('seminar', function($q) {
+            $query->whereHas('seminar', function ($q) {
                 $q->where('acc_seminar', 'Disetujui');
             });
         }
 
         $mahasiswas = $query->limit(20)->get();
 
-        $results = $mahasiswas->map(function($m) {
+        $results = $mahasiswas->map(function ($m) {
             return [
                 'id' => $m->nim,
                 'text' => $m->nim . ' - ' . $m->nama
@@ -662,9 +662,9 @@ class PortalController extends Controller
         ]);
 
         $pengajuan = PengajuanJudul::with('mahasiswa')->findOrFail($id);
-        
+
         // Create record in surats table
-        $surat = \App\Models\Surat::create([
+        $surat = Surat::create([
             'jenis_surat' => 'Surat Kesediaan Bimbingan',
             'no_surat' => $validated['no_surat'],
             'tujuan_surat' => $pengajuan->mahasiswa->nama,
@@ -686,7 +686,7 @@ class PortalController extends Controller
     public function uploadKesediaanJudul(Request $request, $id)
     {
         $pengajuan = PengajuanJudul::findOrFail($id);
-        
+
         $request->validate([
             'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
@@ -763,7 +763,7 @@ class PortalController extends Controller
 
             $hour = now()->format('H');
             $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
-            
+
             $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". Pengajuan judul skripsi Anda dengan judul: \"{$pengajuan->judul}\" telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
 
             $waService = new \App\Services\WhatsAppService();
@@ -833,14 +833,14 @@ class PortalController extends Controller
     public function downloadSuratKesediaan($id)
     {
         $pengajuan = PengajuanJudul::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'surat'])->findOrFail($id);
-        
+
         if ($pengajuan->status !== 'disetujui' || (!$pengajuan->surat_kesediaan && !$pengajuan->surat_id)) {
             return back()->with('error', 'Surat kesediaan belum tersedia.');
         }
 
         $mahasiswa = $pengajuan->mahasiswa;
         $prodi = $mahasiswa->programStudi;
-        
+
         $data = [
             'pengajuan' => $pengajuan,
             'mahasiswa' => $mahasiswa,
@@ -854,7 +854,7 @@ class PortalController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-bimbingan', $data);
         $filename = 'surat_kesediaan_' . $pengajuan->nim . '.pdf';
-        
+
         return $pdf->stream($filename);
     }
 
@@ -864,17 +864,21 @@ class PortalController extends Controller
         $query = Seminar::with(['mahasiswa', 'pembimbing1', 'pembimbing2', 'pengujiSeminar']);
         $notifications = $this->getNotifications();
 
-        if ($user->hasRole('mahasiswa')) { $query->where('nim', $user->nim); }
+        if ($user->hasRole('mahasiswa')) {
+            $query->where('nim', $user->nim);
+        }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
-                  ->orWhereHas('mahasiswa', function($mq) use ($search) {
-                      $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('mahasiswa', function ($mq) use ($search) {
+                        $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
+                    });
             });
         }
-        if ($request->filled('status')) { $query->where('acc_seminar', $request->status); }
+        if ($request->filled('status')) {
+            $query->where('acc_seminar', $request->status);
+        }
         $seminars = $query->latest()->paginate(10)->withQueryString();
         $dosens = \App\Models\Dosen::orderBy('nama')->get();
         return view('portal.riwayat-seminar', compact('seminars', 'notifications', 'dosens'));
@@ -886,14 +890,16 @@ class PortalController extends Controller
         $query = Skripsi::with(['mahasiswa', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2']);
         $notifications = $this->getNotifications();
 
-        if ($user->hasRole('mahasiswa')) { $query->where('nim', $user->nim); }
+        if ($user->hasRole('mahasiswa')) {
+            $query->where('nim', $user->nim);
+        }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
-                  ->orWhereHas('mahasiswa', function($mq) use ($search) {
-                      $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('mahasiswa', function ($mq) use ($search) {
+                        $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
+                    });
             });
         }
         $skripsis = $query->latest()->paginate(10)->withQueryString();
@@ -907,14 +913,16 @@ class PortalController extends Controller
         $query = PraktekLapang::with(['mahasiswa', 'dosenPembimbing']);
         $notifications = $this->getNotifications();
 
-        if ($user->hasRole('mahasiswa')) { $query->where('nim', $user->nim); }
+        if ($user->hasRole('mahasiswa')) {
+            $query->where('nim', $user->nim);
+        }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('lokasi', 'like', "%{$search}%")->orWhere('laporan', 'like', "%{$search}%")
-                  ->orWhereHas('mahasiswa', function($mq) use ($search) {
-                      $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('mahasiswa', function ($mq) use ($search) {
+                        $mq->where('nama', 'like', "%{$search}%")->orWhere('nim', 'like', "%{$search}%");
+                    });
             });
         }
         $prakteks = $query->latest()->paginate(10)->withQueryString();
@@ -926,15 +934,15 @@ class PortalController extends Controller
     {
         $user = auth()->user();
         $notifications = $this->getNotifications();
-        
+
         $query = Surat::with(['seminars.mahasiswa', 'skripsis.mahasiswa', 'praktekLapangs.mahasiswa']);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('no_surat', 'like', "%{$search}%")
-                  ->orWhere('jenis_surat', 'like', "%{$search}%")
-                  ->orWhere('tujuan_surat', 'like', "%{$search}%");
+                    ->orWhere('jenis_surat', 'like', "%{$search}%")
+                    ->orWhere('tujuan_surat', 'like', "%{$search}%");
             });
         }
 
@@ -984,7 +992,7 @@ class PortalController extends Controller
     public function viewSurat($id)
     {
         $surat = Surat::with(['seminars.mahasiswa.programStudi', 'skripsis.mahasiswa.programStudi', 'praktekLapangs.mahasiswa.programStudi'])->findOrFail($id);
-        
+
         $related_data = null;
         $prodi = null;
 
@@ -1025,7 +1033,7 @@ class PortalController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.generic-surat', $data);
         $filename = 'surat_' . str_replace(['/', ' '], '_', $surat->no_surat) . '.pdf';
-        
+
         return $pdf->stream($filename);
     }
 
@@ -1044,7 +1052,8 @@ class PortalController extends Controller
     private function getNotifications()
     {
         $user = auth()->user();
-        if (!$user) return [];
+        if (!$user)
+            return [];
 
         $items = [];
         $recentThreshold = now()->subDays(3);
@@ -1055,19 +1064,22 @@ class PortalController extends Controller
                 ->where('updated_at', '>=', $recentThreshold)
                 ->whereColumn('updated_at', '>', 'created_at')
                 ->count();
-            if ($seminarCount > 0) $items[] = "Status Seminar Anda telah diperbarui.";
+            if ($seminarCount > 0)
+                $items[] = "Status Seminar Anda telah diperbarui.";
 
             $skripsiCount = Skripsi::where('nim', $user->nim)
                 ->where('updated_at', '>=', $recentThreshold)
                 ->whereColumn('updated_at', '>', 'created_at')
                 ->count();
-            if ($skripsiCount > 0) $items[] = "Status pendaftaran Skripsi Anda telah diperbarui.";
+            if ($skripsiCount > 0)
+                $items[] = "Status pendaftaran Skripsi Anda telah diperbarui.";
 
             $praktekCount = PraktekLapang::where('nim', $user->nim)
                 ->where('updated_at', '>=', $recentThreshold)
                 ->whereColumn('updated_at', '>', 'created_at')
                 ->count();
-            if ($praktekCount > 0) $items[] = "Status Praktek Lapang Anda telah diperbarui.";
+            if ($praktekCount > 0)
+                $items[] = "Status Praktek Lapang Anda telah diperbarui.";
         }
 
         if ($user->hasRole('staff') || $user->hasRole('kaprodi')) {
@@ -1075,13 +1087,17 @@ class PortalController extends Controller
             $newSeminar = Seminar::where('created_at', '>=', $recentThreshold)->count();
             $newSkripsi = Skripsi::where('created_at', '>=', $recentThreshold)->count();
             $newPraktek = PraktekLapang::where('created_at', '>=', $recentThreshold)->count();
-            
-            if ($newSeminar > 0) $items[] = "Ada $newSeminar pendaftaran Seminar baru.";
-            if ($newSkripsi > 0) $items[] = "Ada $newSkripsi pendaftaran Skripsi baru.";
-            if ($newPraktek > 0) $items[] = "Ada $newPraktek pendaftaran Praktek Lapang baru.";
+
+            if ($newSeminar > 0)
+                $items[] = "Ada $newSeminar pendaftaran Seminar baru.";
+            if ($newSkripsi > 0)
+                $items[] = "Ada $newSkripsi pendaftaran Skripsi baru.";
+            if ($newPraktek > 0)
+                $items[] = "Ada $newPraktek pendaftaran Praktek Lapang baru.";
 
             $newJudul = PengajuanJudul::where('created_at', '>=', $recentThreshold)->count();
-            if ($newJudul > 0) $items[] = "Ada $newJudul pengajuan Judul baru.";
+            if ($newJudul > 0)
+                $items[] = "Ada $newJudul pengajuan Judul baru.";
         }
 
         if ($user->hasRole('dosen')) {
@@ -1090,23 +1106,26 @@ class PortalController extends Controller
                 $dosenId = $dosen->id;
                 // Penambahan data where NIDN used (assigned as supervisor/examiner)
                 $newSeminar = Seminar::where('created_at', '>=', $recentThreshold)
-                    ->where(function($q) use ($dosenId) {
+                    ->where(function ($q) use ($dosenId) {
                         $q->where('pembimbing1_id', $dosenId)->orWhere('pembimbing2_id', $dosenId)
-                          ->orWhere('penguji_seminar_id', $dosenId)->orWhere('penguji2_id', $dosenId);
+                            ->orWhere('penguji_seminar_id', $dosenId)->orWhere('penguji2_id', $dosenId);
                     })->count();
-                
+
                 $newSkripsi = Skripsi::where('created_at', '>=', $recentThreshold)
-                    ->where(function($q) use ($dosenId) {
+                    ->where(function ($q) use ($dosenId) {
                         $q->where('pembimbing1_id', $dosenId)->orWhere('pembimbing2_id', $dosenId)
-                          ->orWhere('penguji1_id', $dosenId)->orWhere('penguji2_id', $dosenId);
+                            ->orWhere('penguji1_id', $dosenId)->orWhere('penguji2_id', $dosenId);
                     })->count();
-                
+
                 $newPraktek = PraktekLapang::where('created_at', '>=', $recentThreshold)
                     ->where('dosen_pembimbing_id', $dosenId)->count();
 
-                if ($newSeminar > 0) $items[] = "Anda ditunjuk sebagai pembimbing/penguji di $newSeminar Seminar baru.";
-                if ($newSkripsi > 0) $items[] = "Anda ditunjuk sebagai pembimbing/penguji di $newSkripsi Skripsi baru.";
-                if ($newPraktek > 0) $items[] = "Anda menjadi pembimbing di $newPraktek Praktek Lapang baru.";
+                if ($newSeminar > 0)
+                    $items[] = "Anda ditunjuk sebagai pembimbing/penguji di $newSeminar Seminar baru.";
+                if ($newSkripsi > 0)
+                    $items[] = "Anda ditunjuk sebagai pembimbing/penguji di $newSkripsi Skripsi baru.";
+                if ($newPraktek > 0)
+                    $items[] = "Anda menjadi pembimbing di $newPraktek Praktek Lapang baru.";
             }
         }
 
@@ -1116,7 +1135,7 @@ class PortalController extends Controller
     public function downloadKesediaanSkripsi($id)
     {
         $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2'])->findOrFail($id);
-        
+
         if (!$skripsi->surat_kesediaan_id) {
             return back()->with('error', 'Surat kesediaan belum digenerate oleh staff.');
         }
@@ -1164,7 +1183,7 @@ class PortalController extends Controller
     public function downloadUndanganSkripsi($id)
     {
         $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2'])->findOrFail($id);
-        
+
         if (!$skripsi->is_kesediaan_valid || !$skripsi->surat_undangan_id) {
             return back()->with('error', 'Surat undangan belum tersedia atau kesediaan belum divalidasi.');
         }
