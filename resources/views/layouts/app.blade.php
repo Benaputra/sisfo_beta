@@ -74,20 +74,21 @@
                 Pengajuan Judul
             </a>
 
-            <a href="{{ route('portal.riwayatSkripsi') }}"
-               class="sidebar-nav-item {{ request()->routeIs('portal.skripsi') || request()->routeIs('portal.riwayatSkripsi') ? 'active' : '' }}">
-                <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
-                    <path d="M3 2.5A1.5 1.5 0 014.5 1h9A1.5 1.5 0 0115 2.5v13a.5.5 0 01-.8.4L9 12.5l-5.2 3.4A.5.5 0 013 15.5v-13z" stroke="currentColor" stroke-width="1.5"/>
-                </svg>
-                Skripsi
-            </a>
-
             <a href="{{ route('portal.riwayatSeminar') }}"
                class="sidebar-nav-item {{ request()->routeIs('portal.riwayatSeminar') || request()->routeIs('portal.seminar') ? 'active' : '' }}">
                 <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
                     <path d="M2 5h14M2 9h9M2 13h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
                 Seminar
+            </a>
+
+
+            <a href="{{ route('portal.riwayatSkripsi') }}"
+               class="sidebar-nav-item {{ request()->routeIs('portal.skripsi') || request()->routeIs('portal.riwayatSkripsi') ? 'active' : '' }}">
+                <svg class="nav-icon" viewBox="0 0 18 18" fill="none">
+                    <path d="M3 2.5A1.5 1.5 0 014.5 1h9A1.5 1.5 0 0115 2.5v13a.5.5 0 01-.8.4L9 12.5l-5.2 3.4A.5.5 0 013 15.5v-13z" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                Skripsi
             </a>
 
             @if(auth()->user()->hasRole('mahasiswa'))
