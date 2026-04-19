@@ -28,6 +28,7 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::post('/seminar/{id}/kesediaan', [PortalController::class, 'uploadKesediaanSeminar'])->name('seminar.kesediaan.upload');
     Route::post('/seminar/{id}/validate', [PortalController::class, 'quickValidateSeminar'])->name('seminar.validate');
     Route::post('/seminar/{id}/notify', [PortalController::class, 'sendSeminarNotification'])->name('seminar.notify');
+    Route::post('/seminar/{id}/bukti-bayar', [PortalController::class, 'uploadBuktiBayarSeminar'])->name('seminar.buktibayar.upload');
 
     // Skripsi
     Route::get('/skripsi', [PortalController::class, 'skripsi'])->name('skripsi');

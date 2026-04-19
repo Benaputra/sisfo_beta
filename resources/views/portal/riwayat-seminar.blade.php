@@ -230,6 +230,23 @@
                                         @endif
                                     </div>
 
+                                    {{-- Tombol untuk Mahasiswa: Upload Bukti Bayar --}}
+                                    @if(auth()->user()->hasRole('mahasiswa') && $seminar->acc_seminar === 'Menunggu')
+                                        <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end; margin-top: 4px;">
+                                            @if($seminar->bukti_bayar)
+                                                <span style="font-size: 9px; color: #059669; font-weight: 700; text-transform: uppercase;">✓ Bukti Bayar Terunggah</span>
+                                            @else
+                                                <button type="button"
+                                                    onclick="openUploadBuktiBayarModal({{ $seminar->id }})"
+                                                    class="btn btn-sm btn-primary"
+                                                    style="font-size: 9px; padding: 6px 12px; font-weight: 800; text-transform: uppercase; border-radius: 6px; white-space: nowrap;">
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                                    Upload Bukti Bayar
+                                                </button>
+                                            @endif
+                                        </div>
+                                    @endif
+
                                     @if($seminar->canGenerateSurat())
                                         <!-- <div style="margin-bottom: 4px; font-size: 9px; color: #059669; font-weight: 700; text-transform: uppercase;">Undangan Siap:</div> -->
                                         <a href="{{ route('portal.seminar.undangan', $seminar->id) }}" target="_blank" class="btn btn-sm" style="background: #6366F1; color: #fff; text-decoration: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 10px; text-transform: uppercase; white-space: nowrap; border: none; box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);">
@@ -254,8 +271,8 @@
                                                     @endif
                                                 @endif
                                             @else
-                                                <div style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Tahap 0: Plotting</div>
-                                                <span style="font-size: 10px; color: var(--text-muted); font-style: italic; text-align: center;">Menunggu Pembimbing</span>
+                                                <!-- <div style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Tahap 0: Plotting</div> -->
+                                                <span style="font-size: 10px; color: var(--text-muted); font-style: italic; text-align: center;">Menunggu Penguji</span>
                                             @endif
                                         </div>
                                     @endif
@@ -440,6 +457,34 @@
                 </div>
             </form>
         </div>
+    </div>
+</div>
+
+{{-- Upload Bukti Bayar Modal (Mahasiswa) --}}
+<div id="uploadBuktiBayarModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10003; align-items:flex-start; justify-content:center; overflow-y:auto; padding: 40px 16px;">
+    <div class="card" style="width:100%; max-width:450px; padding:32px; background:var(--bg-card); position: relative; margin: auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+                <h2 style="font-size:18px; font-weight:700; margin: 0;">Upload Bukti Bayar Seminar</h2>
+                <p style="font-size:12px; color:var(--text-muted); margin: 4px 0 0;">Format: PDF, JPG, atau PNG. Maks. 5 MB.</p>
+            </div>
+            <button onclick="closeUploadBuktiBayarModal()" style="border:none; background:none; cursor:pointer; font-size:24px; color:var(--text-muted);">&times;</button>
+        </div>
+        <form id="uploadBuktiBayarForm" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label class="form-label">File Bukti Pembayaran</label>
+                <input type="file" name="bukti_bayar" id="input_bukti_bayar" class="form-control" required accept=".pdf,.jpg,.jpeg,.png">
+                <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">Unggah bukti transfer / slip pembayaran seminar Anda.</div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px;">
+                <button type="button" onclick="closeUploadBuktiBayarModal()" class="btn btn-secondary">Batal</button>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Unggah Sekarang
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -630,6 +675,17 @@
 
     function closeUploadModal() {
         document.getElementById('uploadKesediaanModal').style.display = 'none';
+    }
+
+    function openUploadBuktiBayarModal(id) {
+        const form = document.getElementById('uploadBuktiBayarForm');
+        form.action = `/portal/seminar/${id}/bukti-bayar`;
+        document.getElementById('input_bukti_bayar').value = '';
+        document.getElementById('uploadBuktiBayarModal').style.display = 'flex';
+    }
+
+    function closeUploadBuktiBayarModal() {
+        document.getElementById('uploadBuktiBayarModal').style.display = 'none';
     }
 </script>
 @endpush

@@ -325,6 +325,39 @@ class PortalController extends Controller
         return back()->with('error', 'Gagal mengunggah file.');
     }
 
+    public function uploadBuktiBayarSeminar(Request $request, $id)
+    {
+        $seminar = Seminar::findOrFail($id);
+        $user = auth()->user();
+
+        // Pastikan hanya mahasiswa pemilik data yang bisa upload
+        if ($user->hasRole('mahasiswa') && $seminar->nim !== $user->nim) {
+            return back()->with('error', 'Akses ditolak.');
+        }
+
+        // Hanya bisa upload saat status masih Menunggu
+        if ($seminar->acc_seminar !== 'Menunggu') {
+            return back()->with('error', 'Bukti bayar hanya dapat diunggah saat status seminar masih Menunggu.');
+        }
+
+        $request->validate([
+            'bukti_bayar' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ], [
+            'bukti_bayar.required' => 'File bukti bayar wajib diunggah.',
+            'bukti_bayar.mimes'    => 'Format file harus PDF, JPG, atau PNG.',
+            'bukti_bayar.max'      => 'Ukuran file maksimal 5 MB.',
+        ]);
+
+        if ($request->hasFile('bukti_bayar')) {
+            $path = $request->file('bukti_bayar')->store('seminar/bukti_bayar', 'public');
+            $seminar->update(['bukti_bayar' => $path]);
+            return back()->with('success', 'Bukti bayar seminar berhasil diunggah.');
+        }
+
+        return back()->with('error', 'Gagal mengunggah file.');
+    }
+
+
     public function skripsi()
     {
         $user = auth()->user();
