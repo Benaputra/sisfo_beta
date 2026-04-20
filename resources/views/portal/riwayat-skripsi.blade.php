@@ -69,10 +69,10 @@
             <table class="w-full text-left" style="border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--brand-light); border-bottom: 1px solid var(--border-light);">
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Mahasiswa</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Judul Skripsi</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Sidang</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Pembimbing</th>
+                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Identitas & Judul</th>
+                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Waktu & Tanggal</th>
+                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Dosen (Pembimbing & Penguji)</th>
+                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Syarat</th>
                         <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px;">Status</th>
                         <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--brand-dark); letter-spacing: 1px; text-align: right;">Aksi</th>
                     </tr>
@@ -80,12 +80,9 @@
                 <tbody class="divide-y divide-outline-variant/10">
                     @forelse ($skripsis as $skripsi)
                         <tr style="transition: background 0.2s;">
-                            <td style="padding: 24px;">
+                            <td style="padding: 24px; max-width: 350px;">
                                 <div style="font-weight: 700; color: var(--text-primary);">{{ $skripsi->mahasiswa->nama ?? 'N/A' }}</div>
-                                <div style="font-size: 11px; color: var(--text-muted);">{{ $skripsi->nim }}</div>
-                                <div style="margin-top: 4px; font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase;">{{ $skripsi->mahasiswa->prodi->nama ?? 'N/A' }}</div>
-                            </td>
-                            <td style="padding: 24px; max-width: 300px;">
+                                <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">{{ $skripsi->nim }} • {{ $skripsi->mahasiswa->prodi->nama ?? 'N/A' }}</div>
                                 <p style="font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.6; font-style: italic;">
                                     "{{ $skripsi->judul }}"
                                 </p>
@@ -93,7 +90,7 @@
                             <td style="padding: 24px;">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
                                     @if($skripsi->tanggal)
-                                        <div style="display: flex; items-center; gap: 6px; font-size: 12px; font-weight: 600;">
+                                        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand);">
                                                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                                                 <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -102,12 +99,12 @@
                                             </svg>
                                             {{ $skripsi->tanggal->format('d M Y') }}
                                         </div>
-                                        <div style="display: flex; items-center; gap: 6px; font-size: 12px; color: var(--text-muted);">
+                                        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted);">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <circle cx="12" cy="12" r="10"></circle>
                                                 <polyline points="12 6 12 12 16 14"></polyline>
                                             </svg>
-                                            {{ $skripsi->waktu ?? '09:00' }} WIB
+                                            {{ $skripsi->tempat ?? 'TBA' }}
                                         </div>
                                     @else
                                         <div style="font-size: 11px; color: var(--text-muted); font-style: italic;">Belum Dijadwalkan</div>
@@ -115,15 +112,36 @@
                                 </div>
                             </td>
                             <td style="padding: 24px;">
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand-light); color: var(--brand-dark); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">P1</div>
-                                        <span style="font-size: 12px; font-weight: 600;">{{ $skripsi->pembimbing1->nama ?? '-' }}</span>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Pembimbing</div>
+                                        <div style="font-size: 12px; font-weight: 600;">1. {{ $skripsi->pembimbing1->nama ?? '-' }}</div>
+                                        <div style="font-size: 12px; font-weight: 600;">2. {{ $skripsi->pembimbing2->nama ?? '-' }}</div>
                                     </div>
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--brand-light); color: var(--brand-dark); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800;">P2</div>
-                                        <span style="font-size: 12px; font-weight: 600;">{{ $skripsi->pembimbing2->nama ?? '-' }}</span>
+                                    <div>
+                                        <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Penguji</div>
+                                        <div style="font-size: 12px; font-weight: 600;">1. {{ $skripsi->penguji1->nama ?? '-' }}</div>
+                                        <div style="font-size: 12px; font-weight: 600;">2. {{ $skripsi->penguji2->nama ?? '-' }}</div>
                                     </div>
+                                </div>
+                            </td>
+                            <td style="padding: 24px;">
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    @if($skripsi->bukti_bayar)
+                                        <a href="{{ asset('storage/' . $skripsi->bukti_bayar) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">Bukti Bayar</a>
+                                    @else
+                                        <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">Bukti Bayar</span>
+                                    @endif
+                                    @if($skripsi->transkrip_nilai)
+                                        <a href="{{ asset('storage/' . $skripsi->transkrip_nilai) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">Transkrip</a>
+                                    @else
+                                        <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">Transkrip</span>
+                                    @endif
+                                    @if($skripsi->toefl)
+                                        <a href="{{ asset('storage/' . $skripsi->toefl) }}" target="_blank" class="badge" style="background: #D1FAE5; color: #065F46; text-decoration: none; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">TOEFL</a>
+                                    @else
+                                        <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 10px; width: fit-content;">TOEFL</span>
+                                    @endif
                                 </div>
                             </td>
                             <td style="padding: 24px;">
@@ -142,11 +160,10 @@
                                         default => 'MENUNGGU',
                                     };
                                 @endphp
-                                <span class="badge {{ $badgeClass }}" style="padding: 4px 12px;">{{ $statusLabel }}</span>
-                                @if($skripsi->is_kesediaan_valid)
-                                    <div style="margin-top: 4px; font-size: 9px; color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                        KESEDIAAN VALID
+                                <span class="badge {{ $badgeClass }}" style="padding: 4px 12px; margin-bottom: 8px;">{{ $statusLabel }}</span>
+                                @if($skripsi->file_kesediaan)
+                                    <div style="font-size: 9px; font-weight: 700; color: {{ $skripsi->is_kesediaan_valid ? 'var(--success)' : '#D97706' }};">
+                                        KESEDIAAN {{ $skripsi->is_kesediaan_valid ? 'VALID' : 'PENDING' }}
                                     </div>
                                 @endif
                             </td>
@@ -228,6 +245,90 @@
     </div>
 
     {{-- Edit Modal --}}
+    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:flex-start; justify-content:center; overflow-y:auto; padding: 40px 16px;">
+        <div class="card" style="width:100%; max-width:600px; padding:32px; background:var(--bg-card); margin: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="font-size:18px; font-weight:700;">Edit Data Skripsi</h2>
+                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
+            </div>
+            <form id="editForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <div class="form-group" style="margin-bottom:16px;">
+                    <label class="form-label">Judul Skripsi</label>
+                    <textarea name="judul" id="edit_judul" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 1</label>
+                        <select name="pembimbing1_id" id="edit_pembimbing1" class="form-control form-select" required>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pembimbing 2</label>
+                        <select name="pembimbing2_id" id="edit_pembimbing2" class="form-control form-select">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Sidang</label>
+                        <input type="date" name="tanggal" id="edit_tanggal" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tempat</label>
+                        <input type="text" name="tempat" id="edit_tempat" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Penguji 1</label>
+                        <select name="penguji1_id" id="edit_penguji1" class="form-control form-select">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Penguji 2</label>
+                        <select name="penguji2_id" id="edit_penguji2" class="form-control form-select">
+                            <option value="">N/A</option>
+                            @foreach($dosens as $dosen)
+                                <option value="{{ $dosen->id }}">{{ $dosen->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row form-row-2" style="margin-bottom:24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Status Persetujuan</label>
+                        <select name="status" id="edit_status" class="form-control form-select">
+                            <option value="Menunggu">Menunggu</option>
+                            <option value="Proses">Dalam Proses</option>
+                            <option value="Disetujui">Disetujui</option>
+                            <option value="Ditolak">Ditolak</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="is_kesediaan_valid" id="edit_is_kesediaan_valid" value="1" style="width: 16px; height: 16px;">
+                            Validasi Surat Kesediaan
+                        </label>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px;">
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -320,8 +421,8 @@
             .then(data => {
                 const form = document.getElementById('editForm');
                 form.action = `/portal/skripsi/${id}`;
-                document.getElementById('edit_judul').value = data.judul;
-                document.getElementById('edit_pembimbing1').value = data.pembimbing1_id;
+                document.getElementById('edit_judul').value = data.judul || '';
+                document.getElementById('edit_pembimbing1').value = data.pembimbing1_id || '';
                 document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
                 document.getElementById('edit_penguji1').value = data.penguji1_id || '';
                 document.getElementById('edit_penguji2').value = data.penguji2_id || '';
@@ -330,6 +431,8 @@
 
                 document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
                 document.getElementById('edit_tempat').value = data.tempat || '';
+                document.getElementById('edit_status').value = (data.status || 'menunggu').charAt(0).toUpperCase() + (data.status || 'menunggu').slice(1);
+                document.getElementById('edit_is_kesediaan_valid').checked = !!data.is_kesediaan_valid;
                 
                 document.getElementById('editModal').style.display = 'flex';
             });

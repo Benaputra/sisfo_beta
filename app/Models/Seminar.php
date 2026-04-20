@@ -75,8 +75,12 @@ class Seminar extends Model
      */
     public function canDownloadKesediaan(): bool
     {
-        return !empty($this->pembimbing1_id) 
-            && !empty($this->bukti_bayar);
+        return $this->acc_seminar === 'Disetujui'
+            && !empty($this->tempat)
+            && !empty($this->tanggal)
+            && !empty($this->penguji_seminar_id)
+            && !empty($this->bukti_bayar)
+            && !empty($this->pembimbing1_id);
     }
 
     /**

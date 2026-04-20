@@ -271,7 +271,7 @@ class PortalController extends Controller
         $seminar = Seminar::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'suratKesediaan'])->findOrFail($id);
 
         if (!$seminar->canDownloadKesediaan()) {
-            return back()->with('error', 'Surat kesediaan belum tersedia. Pastikan Staff sudah menentukan pembimbing & upload bukti bayar.');
+            return back()->with('error', 'Surat kesediaan belum tersedia. Pastikan Staff sudah menentukan penguji, tanggal, tempat, status disetujui, dan upload bukti bayar.');
         }
 
         $mahasiswa = $seminar->mahasiswa;
@@ -442,11 +442,14 @@ class PortalController extends Controller
             'penguji2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id|different:penguji1_id',
             'tanggal' => 'nullable|date',
             'tempat' => 'nullable|string',
+            'status' => 'nullable|string',
         ], [
             'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
             'penguji1_id.different' => 'Penguji 1 tidak boleh sama dengan Pembimbing.',
             'penguji2_id.different' => 'Penguji 2 tidak boleh sama dengan Pembimbing atau Penguji 1.',
         ]);
+
+        $validated['is_kesediaan_valid'] = $request->has('is_kesediaan_valid');
 
         try {
             $skripsi->update($validated);
@@ -772,8 +775,6 @@ class PortalController extends Controller
                 'judul' => $seminar->judul,
                 'pembimbing1_id' => $seminar->pembimbing1_id,
                 'pembimbing2_id' => $seminar->pembimbing2_id,
-                'status' => 'menunggu',
-                'pengajuan_judul_id' => $seminar->pengajuan_judul_id,
             ]
         );
 
