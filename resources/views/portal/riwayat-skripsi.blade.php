@@ -125,7 +125,7 @@
                                             </a>
                                         @else
                                             <span class="badge" style="background: #FEE2E2; color: #991B1B; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 9px; width: fit-content;">
-                                                {{ $file['label'] }}: Miss
+                                                {{ $file['label'] }}
                                             </span>
                                         @endif
                                     @endforeach
@@ -136,7 +136,7 @@
                                         </a>
                                     @else
                                         <span class="badge" style="background: #f3f4f6; color: #6b7280; border-radius: 6px; padding: 4px 10px; font-weight: 700; font-size: 9px; width: fit-content;">
-                                            Kesediaan: Miss
+                                            Kesediaan
                                         </span>
                                     @endif
                                 </div>
