@@ -1237,12 +1237,16 @@ class PortalController extends Controller
 
     public function sendSkripsiNotification(Request $request, $id)
     {
-        $skripsi = Skripsi::with('mahasiswa')->findOrFail($id);
-        $message = $request->input('message');
+        try {
+            $skripsi = Skripsi::with('mahasiswa')->findOrFail($id);
+            $message = $request->input('message');
 
-        \App\Jobs\SendWhatsAppNotification::dispatch($skripsi, 'skripsi', $message);
+            \App\Jobs\SendWhatsAppNotification::dispatch($skripsi, 'skripsi', $message);
 
-        return back()->with('success', 'Notifikasi WhatsApp sedang dikirim.');
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public function quickValidateSkripsi(Request $request, $id)
