@@ -584,6 +584,105 @@ class PortalController extends Controller
         }
     }
 
+    public function downloadKesediaanPraktekLapang($id)
+    {
+        $praktek = PraktekLapang::with(['mahasiswa.programStudi', 'dosenPembimbing', 'surat'])->findOrFail($id);
+
+        if (!$praktek->canGenerateSurat()) {
+            return back()->with('error', 'Surat belum dapat diunduh. Pastikan Lokasi, Pembimbing, dan Bukti Bayar sudah lengkap.');
+        }
+
+        $mahasiswa = $praktek->mahasiswa;
+        $prodi = $mahasiswa->programStudi;
+
+        // Find existing or create placeholder Surat record
+        $surat = $praktek->surat;
+        if (!$surat || $surat->jenis_surat !== 'Surat Kesediaan Praktek Lapang') {
+            $surat = Surat::create([
+                'jenis_surat' => 'Surat Kesediaan Praktek Lapang',
+                'no_surat' => 'UN1/FP/PL-KES-' . rand(100, 999) . '/2026',
+                'tujuan_surat' => $mahasiswa->nama,
+            ]);
+            $praktek->update(['surat_id' => $surat->id]);
+        }
+
+        $data = [
+            'praktek' => $praktek,
+            'mahasiswa' => $mahasiswa,
+            'prodi' => $prodi,
+            'surat' => $surat,
+            'related_data' => [
+                'mahasiswa' => $mahasiswa,
+                'lokasi' => $praktek->lokasi,
+            ],
+            'with_signature' => true,
+            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.generic-surat', $data);
+        $filename = 'surat_kesediaan_pl_' . $praktek->nim . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    public function downloadSuratJalanPraktekLapang($id)
+    {
+        $praktek = PraktekLapang::with(['mahasiswa.programStudi', 'dosenPembimbing'])->findOrFail($id);
+
+        if (!$praktek->canGenerateSurat()) {
+            return back()->with('error', 'Surat Jalan belum dapat diunduh. Pastikan berkas sudah lengkap.');
+        }
+
+        $mahasiswa = $praktek->mahasiswa;
+        $prodi = $mahasiswa->programStudi;
+
+        // Automation: Numbering +1
+        $lastSurat = Surat::where('jenis_surat', 'Surat Jalan Praktek Lapang')->orderBy('id', 'desc')->first();
+        $newNumber = 1;
+        if ($lastSurat) {
+            // Extract numeric part from no_surat
+            if (is_numeric($lastSurat->no_surat)) {
+                $newNumber = (int)$lastSurat->no_surat + 1;
+            } else {
+                preg_match('/\d+/', $lastSurat->no_surat, $matches);
+                if (!empty($matches)) {
+                    $newNumber = (int)$matches[0] + 1;
+                }
+            }
+        }
+
+        // Create Surat record
+        $surat = Surat::create([
+            'jenis_surat' => 'Surat Jalan Praktek Lapang',
+            'no_surat' => $newNumber,
+            'tujuan_surat' => $praktek->lokasi, // Use location data as requested
+        ]);
+        
+        $praktek->update(['surat_id' => $surat->id]);
+
+        $data = [
+            'praktek' => $praktek,
+            'mahasiswa' => $mahasiswa,
+            'prodi' => $prodi,
+            'surat' => $surat,
+            'related_data' => [
+                'mahasiswa' => $mahasiswa,
+                'lokasi' => $praktek->lokasi,
+            ],
+            'with_signature' => true,
+            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.generic-surat', $data);
+        $filename = 'surat_jalan_pl_' . $praktek->nim . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
     public function pengajuanJudul(Request $request)
     {
         $user = auth()->user();

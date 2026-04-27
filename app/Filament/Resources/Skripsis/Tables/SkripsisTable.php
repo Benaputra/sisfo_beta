@@ -45,10 +45,14 @@ class SkripsisTable
                     $mahasiswa = $record->mahasiswa;
                     $prodi = $mahasiswa->programStudi;
 
+                    $filename = 'surat_kesediaan_sidang_' . $record->nim . '_' . time() . '.pdf';
+                    $path = 'pdf/surat/' . $filename;
+
                     $surat = \App\Models\Surat::create([
                         'jenis_surat' => 'Surat Kesediaan Sidang Skripsi',
                         'no_surat' => 'UN1/FP/KES-SKR-' . rand(100, 999) . '/2026',
                         'tujuan_surat' => $mahasiswa->nama,
+                        'file_path' => $path,
                     ]);
 
                     $data = [
@@ -63,8 +67,6 @@ class SkripsisTable
                     ];
 
                     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-sidang', $data);
-                    $filename = 'surat_kesediaan_sidang_' . $record->nim . '_' . time() . '.pdf';
-                    $path = 'pdf/surat/' . $filename;
 
                     \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
 
@@ -97,10 +99,14 @@ class SkripsisTable
                     $mahasiswa = $record->mahasiswa;
                     $prodi = $mahasiswa->programStudi;
 
+                    $filename = 'surat_undangan_sidang_' . $record->nim . '_' . time() . '.pdf';
+                    $path = 'pdf/surat/' . $filename;
+
                     $surat = \App\Models\Surat::create([
                         'jenis_surat' => 'Undangan Sidang Skripsi',
                         'no_surat' => 'UN1/FP/SKR-' . rand(100, 999) . '/2026',
                         'tujuan_surat' => $mahasiswa->nama,
+                        'file_path' => $path,
                     ]);
 
                     $data = [
@@ -114,8 +120,6 @@ class SkripsisTable
                     ];
 
                     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-undangan-sidang', $data);
-                    $filename = 'surat_undangan_sidang_' . $record->nim . '_' . time() . '.pdf';
-                    $path = 'pdf/surat/' . $filename;
 
                     \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
 

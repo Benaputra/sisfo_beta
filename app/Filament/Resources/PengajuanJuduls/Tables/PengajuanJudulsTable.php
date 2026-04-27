@@ -133,6 +133,44 @@ class PengajuanJudulsTable
                             ->success()
                             ->send();
                     }),
+                Action::make('generateKesediaan')
+                    ->label('Surat Kesediaan')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->visible(fn (\App\Models\PengajuanJudul $record) => $record->canDownloadKesediaan())
+                    ->action(function (\App\Models\PengajuanJudul $record) {
+                        $mahasiswa = $record->mahasiswa;
+                        $prodi = $mahasiswa->programStudi;
+
+                        $filename = 'surat_kesediaan_bimbingan_' . $record->nim . '_' . time() . '.pdf';
+                        $path = 'pdf/surat/' . $filename;
+
+                        $surat = \App\Models\Surat::create([
+                            'jenis_surat' => 'Surat Kesediaan Bimbingan',
+                            'no_surat' => $record->no_surat ?? 'UN1/FP/KES-BIM-' . rand(100, 999) . '/2026',
+                            'tujuan_surat' => $mahasiswa->nama,
+                            'file_path' => $path,
+                        ]);
+
+                        $data = [
+                            'pengajuanJudul' => $record,
+                            'mahasiswa' => $mahasiswa,
+                            'prodi' => $prodi,
+                            'surat' => $surat,
+                            'with_signature' => true,
+                            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+                            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+                            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+                        ];
+
+                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-bimbingan', $data);
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
+
+                        $record->update(['surat_id' => $surat->id]);
+
+                        return response()->streamDownload(fn () => print($pdf->output()), $filename);
+                    }),
+
                 Action::make('kirimWa')
                     ->label('Kirim WA')
                     ->icon('heroicon-o-chat-bubble-left-ellipsis')
