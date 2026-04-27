@@ -16,10 +16,11 @@
 <div class="animate-fadein">
 
     {{-- ── Hero Section ── --}}
-    <div style="margin-bottom: 24px;">
+    {{-- ── Hero Section ── --}}
+    <div style="margin-bottom: 16px;">
         <div style="font-size: 10px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 1px;">ACADEMIC PORTAL</div>
-        <h1 class="page-title">Praktek <span>Lapang</span></h1>
-        <p class="page-desc" style="max-width: 600px;">
+        <h1 class="page-title" style="font-size: 24px;">Praktek <span>Lapang</span></h1>
+        <p class="page-desc" style="max-width: 600px; font-size: 12.5px;">
             Submit your field practice registration details. Ensure all academic requirements and payment proofs are valid before final submission.
         </p>
     </div>
@@ -27,22 +28,22 @@
     {{-- ── Main Grid ── --}}
     <form action="{{ route('portal.praktekLapang.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
-        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px;">
+        <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px;">
 
             {{-- Left Form Column --}}
-            <div class="flex flex-col gap-24">
+            <div class="flex flex-col gap-20">
 
                 {{-- Student Information --}}
                 @if($isStaff)
                     <div class="form-section">
-                        <div class="form-section-header">
-                            <div class="section-label">Identitas Mahasiswa</div>
+                        <div class="form-section-header" style="padding: 14px 20px 0;">
+                            <div class="section-label" style="margin-bottom: 12px;">Identitas Mahasiswa</div>
                         </div>
-                        <div class="form-section-body">
+                        <div class="form-section-body" style="padding: 0 20px 20px;">
                             <div class="form-group">
                                 <label class="form-label" for="mahasiswa_select">Pilih Mahasiswa</label>
                                 <select name="nim" id="mahasiswa_select" class="form-control" required placeholder="Cari NIM atau Nama Mahasiswa..."></select>
-                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Ketik minimal 1 karakter untuk mencari mahasiswa.</p>
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Ketik minimal 1 karakter untuk mencari mahasiswa.</p>
                             </div>
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
@@ -90,10 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 {{-- General Information --}}
                 <div class="form-section">
-                    <div class="form-section-header">
-                        <div class="section-label">General Information</div>
+                    <div class="form-section-header" style="padding: 14px 20px 0;">
+                        <div class="section-label" style="margin-bottom: 12px;">General Information</div>
                     </div>
-                    <div class="form-section-body">
+                    <div class="form-section-body" style="padding: 0 20px 20px;">
                         <div class="form-group">
                             <label class="form-label">Research Location</label>
                             <div class="form-control-icon">
@@ -104,17 +105,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <input type="text" name="lokasi" class="form-control" placeholder="e.g. Marine Research Station, Bali" required>
                             </div>
                         </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Laporan Akhir (PDF)</label>
+                            <div class="form-control-icon">
+                                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                <input type="file" name="laporan" class="form-control" accept=".pdf">
+                            </div>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Opsional: Upload jika sudah tersedia.</p>
+                        </div>
                     </div>
                 </div>
 
                 {{-- Academic Supervision --}}
                 <div class="form-section">
-                    <div class="form-section-header">
-                        <div class="section-label">Academic Supervision</div>
+                    <div class="form-section-header" style="padding: 14px 20px 0;">
+                        <div class="section-label" style="margin-bottom: 12px;">Academic Supervision</div>
                     </div>
-                    <div class="form-section-body">
+                    <div class="form-section-body" style="padding: 0 20px 20px;">
                         <div class="form-row">
-                            <div class="form-group">
+                            <div class="form-group" style="margin-bottom: 0;">
                                 <label class="form-label">Assigned Supervisor</label>
                                 <select name="dosen_pembimbing_id" class="form-control form-select" required>
                                     <option value="">Select Faculty Member</option>
@@ -129,24 +142,24 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
 
             {{-- Right Map & Upload Column --}}
-            <div class="flex flex-col gap-24">
+            <div class="flex flex-col gap-20">
 
                 {{-- Payment Verification --}}
                 <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Payment & Submission</div>
+                    <div class="card-header" style="padding: 14px 20px;">
+                        <div class="card-title" style="font-size: 13px;">Payment & Submission</div>
                     </div>
-                    <div class="card-body">
-                        <div class="form-group" style="margin-bottom: 24px;">
+                    <div class="card-body" style="padding: 20px;">
+                        <div class="form-group" style="margin-bottom: 20px;">
                             <label class="form-label">Proof of Payment (PDF)</label>
                             <input type="file" name="bukti_bayar" class="form-control" required>
                             <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">PDF/JPG max 5MB</p>
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-full" style="border-radius: 12px; padding: 14px;">
+                        <button type="submit" class="btn btn-primary btn-full" style="border-radius: 12px; padding: 14px; font-weight: 700;">
                             Submit Registration
                         </button>
-                        <div style="margin-top: 12px; text-align: center; font-size: 10px; color: var(--text-muted);">
+                        <div style="margin-top: 12px; text-align: center; font-size: 10px; color: var(--text-muted); line-height: 1.4;">
                             By submitting, you agree to the academic guidelines and fieldwork safety protocols.
                         </div>
                     </div>

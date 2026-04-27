@@ -190,6 +190,12 @@
                                             <button type="button" class="topbar-icon-btn" onclick="editSkripsi({{ $skripsi->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                             </button>
+
+                                            @if($skripsi->file_kesediaan && !$skripsi->is_kesediaan_valid)
+                                                <button type="button" class="topbar-icon-btn" onclick="quickValidate({{ $skripsi->id }})" title="Validasi Cepat Surat Kesediaan" style="color: #6366F1; border:none; background:none; cursor:pointer;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                                </button>
+                                            @endif
                                             
                                             <form action="{{ route('portal.skripsi.destroy', $skripsi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
                                                 @csrf
@@ -198,10 +204,14 @@
                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                                 </button>
                                             </form>
+                                        @elseif(auth()->user()->hasRole('mahasiswa') && !$skripsi->is_kesediaan_valid)
+                                            <button type="button" class="topbar-icon-btn" onclick="editSkripsi({{ $skripsi->id }})" title="Update Berkas" style="color: var(--brand); border:none; background:none; cursor:pointer;">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
                                         @endif
                                     </div>
 
-                                    @if($skripsi->canDownloadUndangan())
+                                    @if($skripsi->is_kesediaan_valid)
                                         <a href="{{ route('portal.skripsi.undangan', $skripsi->id) }}" target="_blank" class="btn btn-sm" style="background: #6366F1; color: #fff; text-decoration: none; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 10px; text-transform: uppercase;">
                                             Surat Undangan
                                         </a>
@@ -212,11 +222,9 @@
                                                 <a href="{{ route('portal.skripsi.kesediaan', $skripsi->id) }}" target="_blank" class="btn btn-sm" style="background: #fff; color: var(--brand); border: 1.5px solid var(--brand); font-size: 9px; padding: 6px 10px; font-weight: 800; text-transform: uppercase; border-radius: 6px;">
                                                     Download Kesediaan
                                                 </a>
-                                                @if(!$skripsi->is_kesediaan_valid)
-                                                    <button type="button" onclick="openUploadModal({{ $skripsi->id }})" class="btn btn-sm btn-primary" style="font-size: 9px; padding: 6px 10px; font-weight: 800; text-transform: uppercase; border-radius: 6px;">
-                                                        Upload Kesediaan
-                                                    </button>
-                                                @endif
+                                                <button type="button" onclick="openUploadModal({{ $skripsi->id }})" class="btn btn-sm btn-primary" style="font-size: 9px; padding: 6px 10px; font-weight: 800; text-transform: uppercase; border-radius: 6px;">
+                                                    Upload Kesediaan
+                                                </button>
                                             @else
                                                 <span style="font-size: 10px; color: var(--text-muted); font-style: italic; text-align: right;">Menunggu Jadwal/Penguji</span>
                                             @endif
@@ -265,6 +273,8 @@
             <form id="editForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                
+                @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
                 <div class="form-group" style="margin-bottom:16px;">
                     <label class="form-label">Judul Skripsi</label>
                     <textarea name="judul" id="edit_judul" class="form-control" rows="3" required></textarea>
@@ -329,12 +339,27 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 32px;">
-                            <input type="checkbox" name="is_kesediaan_valid" id="edit_is_kesediaan_valid" value="1" style="width: 16px; height: 16px;">
-                            Validasi Surat Kesediaan
-                        </label>
+                        <label class="form-label">Nomor Surat Kesediaan</label>
+                        <input type="text" name="no_surat_kesediaan" id="edit_no_surat_kesediaan" class="form-control" placeholder="Contoh: UN1/FP/SKR-001/2026">
                     </div>
                 </div>
+                @endif
+
+                {{-- Digital Archives (Always visible for edit) --}}
+                <div class="section-label" style="margin-top: 16px; margin-bottom: 24px;">UPDATE BERKAS (PDF/IMG)</div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Bukti Bayar</label>
+                    <input type="file" name="bukti_bayar" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Transkrip Nilai</label>
+                    <input type="file" name="transkrip_nilai" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label">Sertifikat TOEFL</label>
+                    <input type="file" name="toefl" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+
                 <div style="display:flex; justify-content:flex-end; gap:12px;">
                     <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
@@ -367,12 +392,18 @@
                 <div id="wa_display_message" style="font-size: 13px; line-height: 1.6; color: var(--text-primary); background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--border); white-space: pre-wrap;"></div>
             </div>
 
-            <div style="display:flex; justify-content:flex-end; gap:12px;">
+            <div style="display:flex; justify-content:flex-end; gap:12px; flex-wrap: wrap;">
                 <button type="button" onclick="closeWaModal()" class="btn btn-secondary">Batal</button>
-                <button type="button" id="btnSendWa" class="btn btn-primary" style="background: #25D366; border: none; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
-                    <span id="waBtnText">Kirim Otomatis</span>
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <a id="btnManualWa" href="#" target="_blank" class="btn" style="background: #E5E7EB; color: #374151; border: none; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 16px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Kirim Manual
+                    </a>
+                    <button type="button" id="btnSendWa" class="btn btn-primary" style="background: #25D366; border: none; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>
+                        <span id="waBtnText">Kirim Otomatis</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -407,7 +438,9 @@
         const p2 = document.getElementById('edit_pembimbing2');
         const penguji1 = document.getElementById('edit_penguji1');
         const penguji2 = document.getElementById('edit_penguji2');
-
+ 
+        if (!p1 || !p2 || !penguji1 || !penguji2) return;
+ 
         const selectors = [p1, p2, penguji1, penguji2];
         const values = selectors.map(s => s.value);
 
@@ -433,7 +466,8 @@
     }
 
     ['edit_pembimbing1', 'edit_pembimbing2', 'edit_penguji1', 'edit_penguji2'].forEach(id => {
-        document.getElementById(id).addEventListener('change', filterSkripsiEditOptions);
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', filterSkripsiEditOptions);
     });
 
     function editSkripsi(id) {
@@ -442,21 +476,42 @@
             .then(data => {
                 const form = document.getElementById('editForm');
                 form.action = `/portal/skripsi/${id}`;
-                document.getElementById('edit_judul').value = data.judul;
-                document.getElementById('edit_pembimbing1').value = data.pembimbing1_id;
-                document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
-                document.getElementById('edit_penguji1').value = data.penguji1_id || '';
-                document.getElementById('edit_penguji2').value = data.penguji2_id || '';
+                
+                if(document.getElementById('edit_judul')) document.getElementById('edit_judul').value = data.judul;
+                if(document.getElementById('edit_pembimbing1')) document.getElementById('edit_pembimbing1').value = data.pembimbing1_id;
+                if(document.getElementById('edit_pembimbing2')) document.getElementById('edit_pembimbing2').value = data.pembimbing2_id || '';
+                if(document.getElementById('edit_penguji1')) document.getElementById('edit_penguji1').value = data.penguji1_id || '';
+                if(document.getElementById('edit_penguji2')) document.getElementById('edit_penguji2').value = data.penguji2_id || '';
                 
                 filterSkripsiEditOptions();
-
-                document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
-                document.getElementById('edit_tempat').value = data.tempat || '';
-                document.getElementById('edit_status').value = data.status || 'menunggu';
-                document.getElementById('edit_is_kesediaan_valid').checked = !!data.is_kesediaan_valid;
+ 
+                if(document.getElementById('edit_tanggal')) document.getElementById('edit_tanggal').value = data.tanggal ? data.tanggal.split('T')[0] : '';
+                if(document.getElementById('edit_tempat')) document.getElementById('edit_tempat').value = data.tempat || '';
+                if(document.getElementById('edit_status')) document.getElementById('edit_status').value = data.status || 'menunggu';
+                if(document.getElementById('edit_no_surat_kesediaan')) document.getElementById('edit_no_surat_kesediaan').value = data.surat_kesediaan ? data.surat_kesediaan.no_surat : '';
                 
                 document.getElementById('editModal').style.display = 'flex';
             });
+    }
+ 
+    function quickValidate(id) {
+        if (!confirm('Apakah Anda yakin ingin memvalidasi surat kesediaan ini? Surat Undangan akan otomatis digenerate.')) return;
+ 
+        fetch(`/portal/skripsi/${id}/validate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Gagal memvalidasi surat kesediaan.');
+            }
+        });
     }
 
     function closeModal() {
@@ -468,6 +523,11 @@
         document.getElementById('wa_display_number').innerText = phoneNumber || 'N/A';
         document.getElementById('wa_display_message').innerText = message;
         
+        // Setup link manual
+        const cleanNumber = (phoneNumber || '').replace(/\D/g, '');
+        const waLink = `https://wa.me/${cleanNumber.startsWith('0') ? '62'+cleanNumber.substring(1) : cleanNumber}?text=${encodeURIComponent(message)}`;
+        document.getElementById('btnManualWa').href = waLink;
+
         const btnSend = document.getElementById('btnSendWa');
         btnSend.onclick = () => sendWaNotification(id);
         

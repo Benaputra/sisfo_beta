@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\PengajuanJuduls\Tables;
 
-use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
@@ -37,11 +37,16 @@ class PengajuanJudulsTable
                     ->badge()
                     ->formatStateUsing(fn ($state, $record) => $record->file_kesediaan ? ($state ? 'Valid' : 'Menunggu Validasi') : 'Belum Upload')
                     ->color(fn ($state, $record) => $record->file_kesediaan ? ($state ? 'success' : 'warning') : 'gray'),
+                TextColumn::make('notifikasi_whatsapp')
+                    ->label('WA')
+                    ->formatStateUsing(fn ($state) => $state ? 'Terkirim' : 'Belum')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'gray'),
             ])
             ->filters([
                 //
             ])
-            ->recordActions([
+            ->actions([
                 EditAction::make(),
                 Action::make('approve')
                     ->label('Approve')
@@ -88,8 +93,7 @@ class PengajuanJudulsTable
                             $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
                             $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". Pengajuan judul skripsi Anda dengan judul: \"{$record->judul}\" telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
 
-                            $waService = new \App\Services\WhatsAppService();
-                            $waService->send($mahasiswa->no_hp, $message);
+                            \App\Jobs\SendWhatsAppNotification::dispatch($record, 'pengajuan_judul', $message);
                         }
 
                         Notification::make()
@@ -126,6 +130,39 @@ class PengajuanJudulsTable
 
                         Notification::make()
                             ->title('Kesediaan divalidasi & diteruskan ke seminar')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('kirimWa')
+                    ->label('Kirim WA')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->form([
+                        Textarea::make('message')
+                            ->label('Pesan WhatsApp')
+                            ->rows(5)
+                            ->default(function (\App\Models\PengajuanJudul $record) {
+                                $hour = now()->format('H');
+                                $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
+                                $mahasiswa = $record->mahasiswa;
+                                $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
+                                
+                                if ($record->status === 'disetujui') {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pengajuan judul skripsi Anda telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
+                                } elseif ($record->status === 'ditolak') {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Mohon maaf, pengajuan judul skripsi Anda BELUM DISETUJUI. Silakan cek keterangan di portal dan ajukan kembali. Terima Kasih.";
+                                } else {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pengajuan judul skripsi Anda sedang dalam proses verifikasi. Mohon cek berkala. Terima Kasih.";
+                                }
+                            })
+                            ->required(),
+                    ])
+                    ->modalHeading('Kirim Notifikasi WhatsApp')
+                    ->modalDescription('Tinjau dan ubah isi pesan sebelum mengirim.')
+                    ->action(function (\App\Models\PengajuanJudul $record, array $data) {
+                        \App\Jobs\SendWhatsAppNotification::dispatch($record, 'pengajuan_judul', $data['message']);
+                        Notification::make()
+                            ->title('Notifikasi WA sedang dikirim')
                             ->success()
                             ->send();
                     }),

@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\Skripsis\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Models\Skripsi;
@@ -31,14 +32,14 @@ class SkripsisTable
                 ->badge()
                 ->color(fn ($state) => $state === 'Lengkap' ? 'success' : 'warning'),
         ])
-        ->recordActions([
-            \Filament\Tables\Actions\EditAction::make(),
+        ->actions([
+            EditAction::make(),
             
-            \Filament\Tables\Actions\Action::make('generateKesediaan')
+            Action::make('generateKesediaan')
                 ->label('Surat Kesediaan')
                 ->icon('heroicon-o-document-text')
                 ->color('info')
-                ->visible(fn (Skripsi $record) => $record->isDataComplete())
+                ->visible(fn (Skripsi $record) => $record->canDownloadKesediaan())
                 ->action(function (Skripsi $record) {
                     $user = auth()->user();
                     $mahasiswa = $record->mahasiswa;
@@ -72,7 +73,7 @@ class SkripsisTable
                     return response()->streamDownload(fn () => print($pdf->output()), $filename);
                 }),
 
-            \Filament\Tables\Actions\Action::make('validateKesediaan')
+            Action::make('validateKesediaan')
                 ->label('Validasi Kesediaan')
                 ->icon('heroicon-o-check-badge')
                 ->color('success')
@@ -86,7 +87,7 @@ class SkripsisTable
                         ->send();
                 }),
 
-            \Filament\Tables\Actions\Action::make('generateUndangan')
+            Action::make('generateUndangan')
                 ->label('Surat Undangan')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
@@ -123,7 +124,7 @@ class SkripsisTable
                     return response()->streamDownload(fn () => print($pdf->output()), $filename);
                 }),
 
-            \Filament\Tables\Actions\Action::make('kirimWa')
+            Action::make('kirimWa')
                 ->label('Kirim WA')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')

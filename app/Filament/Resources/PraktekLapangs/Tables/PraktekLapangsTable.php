@@ -30,7 +30,7 @@ class PraktekLapangsTable
                 ->badge()
                 ->color(fn ($state) => $state === 'Lengkap' ? 'success' : 'warning'),
         ])
-        ->recordActions([
+        ->actions([
             \Filament\Tables\Actions\EditAction::make(),
             \Filament\Tables\Actions\Action::make('kirimWa')
                 ->label('Kirim WA')

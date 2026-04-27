@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\Seminars\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\Action;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Models\Seminar;
@@ -43,7 +43,7 @@ class SeminarsTable
                     ->color(fn ($state) => $state === 'Siap' ? 'success' : 'warning'),
             ])
             ->filters([])
-            ->recordActions([
+            ->actions([
                 EditAction::make(),
                 
                 Action::make('generatePDF')

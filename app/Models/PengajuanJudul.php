@@ -21,10 +21,12 @@ class PengajuanJudul extends Model
         'keterangan',
         'pembimbing1_id',
         'pembimbing2_id',
+        'notifikasi_whatsapp',
     ];
 
     protected $casts = [
         'is_kesediaan_valid' => 'boolean',
+        'notifikasi_whatsapp' => 'boolean',
         'tanggal' => 'date',
     ];
 

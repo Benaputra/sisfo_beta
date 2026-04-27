@@ -195,37 +195,18 @@ class PortalController extends Controller
         }
     }
 
-    public function sendSeminarNotification(Request $request, $id, \App\Services\WhatsAppService $waService)
+    public function sendSeminarNotification(Request $request, $id)
     {
-        $seminar = Seminar::findOrFail($id);
-        $mahasiswa = $seminar->mahasiswa;
+        try {
+            $seminar = Seminar::with('mahasiswa')->findOrFail($id);
+            $message = $request->input('message');
 
-        if (!$mahasiswa || !$mahasiswa->no_hp) {
-            return response()->json(['success' => false, 'message' => 'Mahasiswa atau nomor HP tidak ditemukan.']);
-        }
+            \App\Jobs\SendWhatsAppNotification::dispatch($seminar, 'seminar', $message);
 
-        $hour = now()->format('H');
-        $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
-
-        $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
-
-        if ($seminar->canGenerateSurat()) {
-            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Undangan seminar sudah dapat didownload pada sistem informasi FPST UPB. Terima Kasih.";
-        } elseif ($seminar->file_kesediaan) {
-            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Kesediaan Bimbingan Anda sedang divalidasi. Mohon cek berkala untuk mengunduh Surat Undangan Seminar jika sudah disetujui. Terima Kasih.";
-        } elseif ($seminar->canDownloadKesediaan()) {
-            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Silakan diprint dan dimintakan tanda tangan dosen pembimbing, lalu unggah kembali scan surat tersebut ke portal. Terima Kasih.";
-        } else {
-            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pendaftaran seminar Anda sedang dalam proses verifikasi staff. Terima Kasih.";
-        }
-
-        $success = $waService->send($mahasiswa->no_hp, $message);
-
-        if ($success) {
             return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
-
-        return response()->json(['success' => false, 'message' => 'Gagal mengirim pesan melalui Wablas.']);
     }
 
     public function downloadUndanganSeminar($id)
@@ -427,26 +408,62 @@ class PortalController extends Controller
 
     public function editSkripsi($id)
     {
-        $skripsi = Skripsi::findOrFail($id);
+        $skripsi = Skripsi::with(['suratKesediaan', 'suratUndangan'])->findOrFail($id);
         return response()->json($skripsi);
     }
 
     public function updateSkripsi(Request $request, $id)
     {
         $skripsi = Skripsi::findOrFail($id);
-        $validated = $request->validate([
-            'judul' => 'required|string',
-            'pembimbing1_id' => 'required|exists:dosen,id',
-            'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
-            'penguji1_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id',
-            'penguji2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id|different:penguji1_id',
-            'tanggal' => 'nullable|date',
-            'tempat' => 'nullable|string',
-        ], [
-            'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
-            'penguji1_id.different' => 'Penguji 1 tidak boleh sama dengan Pembimbing.',
-            'penguji2_id.different' => 'Penguji 2 tidak boleh sama dengan Pembimbing atau Penguji 1.',
-        ]);
+        $user = auth()->user();
+        $isStaff = $user->hasRole('staff') || $user->hasRole('kaprodi');
+
+        if ($isStaff) {
+            $validated = $request->validate([
+                'judul' => 'required|string',
+                'pembimbing1_id' => 'required|exists:dosen,id',
+                'pembimbing2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id',
+                'penguji1_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id',
+                'penguji2_id' => 'nullable|exists:dosen,id|different:pembimbing1_id|different:pembimbing2_id|different:penguji1_id',
+                'tanggal' => 'nullable|date',
+                'tempat' => 'nullable|string',
+                'status' => 'required|in:menunggu,proses,disetujui,ditolak',
+                'no_surat_kesediaan' => 'nullable|string',
+            ], [
+                'pembimbing2_id.different' => 'Pembimbing 2 tidak boleh sama dengan Pembimbing 1.',
+                'penguji1_id.different' => 'Penguji 1 tidak boleh sama dengan Pembimbing.',
+                'penguji2_id.different' => 'Penguji 2 tidak boleh sama dengan Pembimbing atau Penguji 1.',
+            ]);
+
+            // Handle Nomor Surat Kesediaan
+            if ($request->filled('no_surat_kesediaan')) {
+                if ($skripsi->surat_kesediaan_id) {
+                    $skripsi->suratKesediaan->update(['no_surat' => $request->no_surat_kesediaan]);
+                } else {
+                    $surat = Surat::create([
+                        'jenis_surat' => 'Kesediaan Sidang Skripsi',
+                        'no_surat' => $request->no_surat_kesediaan,
+                        'tujuan_surat' => $skripsi->mahasiswa->nama,
+                    ]);
+                    $skripsi->update(['surat_kesediaan_id' => $surat->id]);
+                }
+            }
+        } else {
+            // Mahasiswa only allowed to upload files
+            $validated = $request->validate([
+                'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'transkrip_nilai' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+                'toefl' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            ]);
+        }
+
+        // Handle file uploads for both roles (if student uploads or if staff uploads)
+        foreach (['bukti_bayar', 'transkrip_nilai', 'toefl'] as $fileField) {
+            if ($request->hasFile($fileField)) {
+                $path = $request->file($fileField)->store('skripsi_files', 'public');
+                $validated[$fileField] = $path;
+            }
+        }
 
         try {
             $skripsi->update($validated);
@@ -496,7 +513,8 @@ class PortalController extends Controller
             'nim' => $isStaff ? 'required|exists:mahasiswa,nim' : 'nullable',
             'lokasi' => 'required|string',
             'dosen_pembimbing_id' => 'required|exists:dosen,id',
-            'bukti_bayar' => 'nullable|file|mimes:pdf|max:5120',
+            'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'laporan' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ]);
 
         if (!$isStaff) {
@@ -504,8 +522,13 @@ class PortalController extends Controller
         }
 
         if ($request->hasFile('bukti_bayar')) {
-            $path = $request->file('bukti_bayar')->store('praktek_lapang_files', 'public');
+            $path = $request->file('bukti_bayar')->store('praktek_lapang/bukti_bayar', 'public');
             $validated['bukti_bayar'] = $path;
+        }
+
+        if ($request->hasFile('laporan')) {
+            $path = $request->file('laporan')->store('praktek_lapang/laporan', 'public');
+            $validated['laporan'] = $path;
         }
 
         try {
@@ -528,8 +551,19 @@ class PortalController extends Controller
         $validated = $request->validate([
             'lokasi' => 'required|string',
             'dosen_pembimbing_id' => 'required|exists:dosen,id',
-            'laporan' => 'nullable|string',
+            'laporan' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+            'bukti_bayar' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
+
+        if ($request->hasFile('laporan')) {
+            $path = $request->file('laporan')->store('praktek_lapang/laporan', 'public');
+            $validated['laporan'] = $path;
+        }
+
+        if ($request->hasFile('bukti_bayar')) {
+            $path = $request->file('bukti_bayar')->store('praktek_lapang/bukti_bayar', 'public');
+            $validated['bukti_bayar'] = $path;
+        }
 
         try {
             $praktek->update($validated);
@@ -780,29 +814,15 @@ class PortalController extends Controller
         return back()->with('success', 'Surat kesediaan seminar berhasil divalidasi dan data telah diteruskan ke pendaftaran skripsi dengan status Menunggu.');
     }
 
-    public function notifyJudul($id)
+    public function notifyJudul(Request $request, $id)
     {
         try {
             $pengajuan = PengajuanJudul::with('mahasiswa')->findOrFail($id);
-            $mahasiswa = $pengajuan->mahasiswa;
+            $message = $request->input('message');
 
-            if (!$mahasiswa || !$mahasiswa->no_hp) {
-                return response()->json(['success' => false, 'message' => 'Nomor HP mahasiswa tidak ditemukan.']);
-            }
+            \App\Jobs\SendWhatsAppNotification::dispatch($pengajuan, 'pengajuan_judul', $message);
 
-            $hour = now()->format('H');
-            $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
-
-            $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". Pengajuan judul skripsi Anda dengan judul: \"{$pengajuan->judul}\" telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
-
-            $waService = new \App\Services\WhatsAppService();
-            $result = $waService->sendMessage($mahasiswa->no_hp, $message);
-
-            if ($result && isset($result['status']) && $result['status'] == true) {
-                return response()->json(['success' => true]);
-            }
-
-            return response()->json(['success' => false, 'message' => 'Gagal mengirim pesan melalui Gateway.']);
+            return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
@@ -1163,15 +1183,25 @@ class PortalController extends Controller
 
     public function downloadKesediaanSkripsi($id)
     {
-        $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2'])->findOrFail($id);
+        $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2', 'suratKesediaan'])->findOrFail($id);
 
-        if (!$skripsi->surat_kesediaan_id) {
-            return back()->with('error', 'Surat kesediaan belum digenerate oleh staff.');
+        if (!$skripsi->canDownloadKesediaan()) {
+            return back()->with('error', 'Surat belum dapat diunduh. Pastikan Penguji, Tempat, Bukti Bayar, TOEFL, Transkrip, dan Status Disetujui sudah diisi oleh Staff.');
         }
 
         $mahasiswa = $skripsi->mahasiswa;
         $prodi = $mahasiswa->programStudi;
+
+        // Find existing or create placeholder Surat record
         $surat = $skripsi->suratKesediaan;
+        if (!$surat) {
+            $surat = Surat::create([
+                'jenis_surat' => 'Surat Kesediaan Sidang Skripsi',
+                'no_surat' => 'UN1/FP/KES-SKR-' . rand(100, 999) . '/2026',
+                'tujuan_surat' => $mahasiswa->nama,
+            ]);
+            $skripsi->update(['surat_kesediaan_id' => $surat->id]);
+        }
 
         $data = [
             'skripsi' => $skripsi,
@@ -1185,13 +1215,15 @@ class PortalController extends Controller
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-sidang', $data);
-        return $pdf->download('surat_kesediaan_sidang_' . $skripsi->nim . '.pdf');
+        $filename = 'surat_kesediaan_sidang_' . $skripsi->nim . '.pdf';
+
+        return $pdf->stream($filename);
     }
 
     public function uploadKesediaanSkripsi(Request $request, $id)
     {
         $request->validate([
-            'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'file_kesediaan' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         $skripsi = Skripsi::findOrFail($id);
@@ -1211,28 +1243,41 @@ class PortalController extends Controller
 
     public function downloadUndanganSkripsi($id)
     {
-        $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2'])->findOrFail($id);
+        $skripsi = Skripsi::with(['mahasiswa.programStudi', 'pembimbing1', 'pembimbing2', 'penguji1', 'penguji2', 'suratUndangan'])->findOrFail($id);
 
-        if (!$skripsi->is_kesediaan_valid || !$skripsi->surat_undangan_id) {
-            return back()->with('error', 'Surat undangan belum tersedia atau kesediaan belum divalidasi.');
+        if (!$skripsi->is_kesediaan_valid) {
+            return back()->with('error', 'Surat undangan belum dapat diunduh. Pastikan Surat Kesediaan sudah divalidasi oleh Staff.');
         }
 
         $mahasiswa = $skripsi->mahasiswa;
         $prodi = $mahasiswa->programStudi;
+
+        // Find existing or create placeholder Surat record
         $surat = $skripsi->suratUndangan;
+        if (!$surat) {
+            $nextNo = $this->generateNextNoSurat('Undangan Sidang Skripsi');
+            $surat = Surat::create([
+                'jenis_surat' => 'Undangan Sidang Skripsi',
+                'no_surat' => $nextNo,
+                'tujuan_surat' => $mahasiswa->nama,
+            ]);
+            $skripsi->update(['surat_undangan_id' => $surat->id]);
+        }
 
         $data = [
             'skripsi' => $skripsi,
             'mahasiswa' => $mahasiswa,
             'surat' => $surat,
             'with_signature' => true,
-            'ttd_path' => $prodi->ttd_ketua_prodi,
-            'ketua_nama' => $prodi->ketuaProdi?->nama,
-            'ketua_nip' => $prodi->ketuaProdi?->nidn,
+            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
         ];
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-undangan-sidang', $data);
-        return $pdf->download('surat_undangan_sidang_' . $skripsi->nim . '.pdf');
+        $filename = 'surat_undangan_sidang_' . $skripsi->nim . '.pdf';
+
+        return $pdf->stream($filename);
     }
 
     public function sendSkripsiNotification(Request $request, $id)
@@ -1251,11 +1296,50 @@ class PortalController extends Controller
 
     public function quickValidateSkripsi(Request $request, $id)
     {
-        $skripsi = Skripsi::findOrFail($id);
-        $skripsi->update([
-            'is_kesediaan_valid' => true,
-        ]);
+        try {
+            $skripsi = Skripsi::with('mahasiswa')->findOrFail($id);
+            
+            // Generate placeholder for Invitation Letter if not exists
+            if (!$skripsi->surat_undangan_id) {
+                $nextNo = $this->generateNextNoSurat('Undangan Sidang Skripsi');
+                $surat = Surat::create([
+                    'jenis_surat' => 'Undangan Sidang Skripsi',
+                    'no_surat' => $nextNo,
+                    'tujuan_surat' => $skripsi->mahasiswa?->nama ?? 'Mahasiswa',
+                ]);
+                $skripsi->surat_undangan_id = $surat->id;
+            }
 
-        return back()->with('success', 'Surat kesediaan sidang skripsi berhasil divalidasi.');
+            $skripsi->is_kesediaan_valid = true;
+            $skripsi->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Log::error('Skripsi Validation Error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    private function generateNextNoSurat($jenis)
+    {
+        $prefix = 'UN1/FP/SKR-';
+        if ($jenis === 'Kesediaan Sidang Skripsi') $prefix = 'UN1/FP/KES-SKR-';
+        
+        $latestSurat = Surat::where('jenis_surat', $jenis)
+            ->where('no_surat', 'LIKE', $prefix . '%')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if (!$latestSurat) {
+            return $prefix . '001/' . date('Y');
+        }
+
+        // Extract number from UN1/FP/SKR-XXX/2026 or UN1/FP/KES-SKR-XXX/2026
+        // Regex handles both slash and hyphen before year
+        preg_match('/' . preg_quote($prefix, '/') . '(\d+)/', $latestSurat->no_surat, $matches);
+        $lastNumber = isset($matches[1]) ? (int)$matches[1] : 0;
+        $nextNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+
+        return $prefix . $nextNumber . '/' . date('Y');
     }
 }
