@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PraktekLapangs\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -31,8 +32,8 @@ class PraktekLapangsTable
                 ->color(fn ($state) => $state === 'Lengkap' ? 'success' : 'warning'),
         ])
         ->actions([
-            \Filament\Tables\Actions\EditAction::make(),
-            \Filament\Tables\Actions\Action::make('generateKesediaan')
+            EditAction::make(),
+            Action::make('generateKesediaan')
                 ->label('Surat Kesediaan')
                 ->icon('heroicon-o-document-text')
                 ->color('info')
@@ -71,7 +72,7 @@ class PraktekLapangsTable
                     return response()->streamDownload(fn () => print($pdf->output()), $filename);
                 }),
 
-            \Filament\Tables\Actions\Action::make('generateSuratJalan')
+            Action::make('generateSuratJalan')
                 ->label('Surat Jalan')
                 ->icon('heroicon-o-truck')
                 ->color('success')
@@ -110,7 +111,7 @@ class PraktekLapangsTable
                     return response()->streamDownload(fn () => print($pdf->output()), $filename);
                 }),
 
-            \Filament\Tables\Actions\Action::make('kirimWa')
+            Action::make('kirimWa')
                 ->label('Kirim WA')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')
