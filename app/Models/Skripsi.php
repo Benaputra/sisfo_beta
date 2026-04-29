@@ -80,20 +80,15 @@ class Skripsi extends Model
     }
 
     /**
-     * Cek apakah surat kesediaan sidang bisa diunduh oleh mahasiswa atau divalidasi oleh staff
-     * Syarat: Semua file upload lengkap, penguji 1 & 2 ada, tempat ada, dan status disetujui.
+     * Cek apakah surat kesediaan sidang bisa diunduh oleh mahasiswa
      */
     public function canDownloadKesediaan(): bool
     {
-        return $this->isDataComplete() 
-            && !empty($this->penguji1_id) 
-            && !empty($this->penguji2_id) 
-            && !empty($this->tempat) 
-            && $this->status === 'disetujui';
+        return $this->surat_kesediaan_id !== null;
     }
 
     /**
-     * Cek apakah surat undangan sidang bisa didownload (setelah validasi kesediaan)
+     * Cek apakah surat undangan sidang bisa didownload (setelah validasi)
      */
     public function canDownloadUndangan(): bool
     {
