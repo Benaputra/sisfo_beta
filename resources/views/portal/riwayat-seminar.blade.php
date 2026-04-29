@@ -644,7 +644,10 @@
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
+            },
+            body: JSON.stringify({
+                message: document.getElementById('wa_display_message').innerText
+            })
         })
         .then(response => response.json())
         .then(data => {

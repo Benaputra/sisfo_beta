@@ -31,7 +31,7 @@
     </div>
 
     {{-- ── Context Chips ── --}}
-    <div style="display: flex; gap: 16px; margin-bottom: 32px;">
+    <!-- <div style="display: flex; gap: 16px; margin-bottom: 32px;">
         <div class="card" style="padding: 16px 24px; display: flex; align-items: center; gap: 16px; background: var(--bg-page); border: none;">
             <div style="padding: 10px; background: rgba(2, 195, 154, 0.1); border-radius: 12px; color: var(--brand);">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -50,7 +50,7 @@
                 <div style="font-size: 20px; font-weight: 800;">01 Pengajuan</div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     {{-- ── Filter Bar ── --}}
     <form action="{{ route('portal.riwayatPraktekLapang') }}" method="GET" class="card" style="padding: 24px; background: var(--bg-page); margin-bottom: 24px;">
@@ -83,23 +83,23 @@
     </form>
 
     {{-- ── Data Table ── --}}
-    <div class="card" style="overflow: hidden;">
+    <div class="card" style="overflow: hidden; margin-bottom: 0;">
         <div style="overflow-x: auto;">
             <table class="w-full text-left" style="border-collapse: collapse;">
                 <thead>
                     <tr style="background: var(--bg-page); border-bottom: 1px solid var(--border-light);">
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Identitas Mahasiswa</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Program Studi</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Detail Praktek</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Pembimbing</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; text-align: center;">Status</th>
-                        <th style="padding: 20px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; text-align: right;">Aksi</th>
+                        <th style="padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Identitas Mahasiswa</th>
+                        <th style="padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Program Studi</th>
+                        <th style="padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Detail Praktek</th>
+                        <th style="padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Pembimbing</th>
+                        <th style="padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; text-align: center;">Status</th>
+                        <th style="padding: 16px 24px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; text-align: right;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-outline-variant/10">
                     @forelse ($prakteks as $praktek)
                         <tr style="transition: background 0.2s;">
-                            <td style="padding: 24px;">
+                            <td style="padding: 20px 24px;">
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--brand-light); color: var(--brand); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px;">
                                         {{ substr($praktek->mahasiswa->nama ?? 'M', 0, 1) }}{{ substr(explode(' ', $praktek->mahasiswa->nama ?? ' ')[1] ?? '', 0, 1) }}
@@ -110,22 +110,29 @@
                                     </div>
                                 </div>
                             </td>
-                            <td style="padding: 24px;">
+                            <td style="padding: 20px 24px;">
                                 <span style="background: rgba(3, 101, 140, 0.1); color: var(--accent); font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 4px; text-transform: uppercase;">
                                     {{ $praktek->mahasiswa->prodi->nama ?? 'N/A' }}
                                 </span>
                             </td>
-                            <td style="padding: 24px;">
-                                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">{{ $praktek->laporan ?? 'TBA' }}</div>
-                                <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+                            <td style="padding: 20px 24px;">
+                                @if($praktek->laporan)
+                                    <a href="{{ asset('storage/' . $praktek->laporan) }}" target="_blank" class="btn btn-ghost btn-sm" style="padding: 4px 10px; font-size: 11px; border-radius: 6px;">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        Download Laporan
+                                    </a>
+                                @else
+                                    <div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Belum ada laporan</div>
+                                @endif
+                                <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 6px;">
                                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                                     {{ $praktek->lokasi ?? 'TBA' }}
                                 </div>
                             </td>
-                            <td style="padding: 24px;">
+                            <td style="padding: 20px 24px;">
                                 <div style="font-size: 13px;">{{ $praktek->dosenPembimbing->nama ?? '-' }}</div>
                             </td>
-                            <td style="padding: 24px; text-align: center;">
+                            <td style="padding: 20px 24px; text-align: center;">
                                 @php
                                     $praktek_status = !empty($praktek->bukti_bayar) ? 'Disetujui' : 'Menunggu';
                                 @endphp
@@ -135,17 +142,41 @@
                                     <span class="badge" style="background: #FFFBEB; color: #92400E;">MENUNGGU</span>
                                 @endif
                             </td>
-                            <td style="padding: 24px; text-align: right;">
-                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <td style="padding: 20px 24px; text-align: right;">
+                                <div style="display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
+                                    @php
+                                        $hasSuratJalan = $praktek->surat && $praktek->surat->jenis_surat === 'Surat Jalan Praktek Lapang';
+                                    @endphp
+
+                                    {{-- Requirement 2: Download Surat Jalan --}}
+                                    @if($praktek->canGenerateSurat())
+                                        <a href="{{ route('portal.praktekLapang.suratJalan', $praktek->id) }}" target="_blank" class="btn btn-ghost btn-sm" title="Download Surat Jalan" style="padding: 6px 12px; font-size: 11px; border: 1px solid var(--brand); color: var(--brand); border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            Surat Jalan
+                                        </a>
+                                    @endif
+
+                                    {{-- Requirement 1: Download Surat Kesediaan --}}
+                                    {{-- Requirement 2: Hilangkan jika Surat Jalan sudah ada --}}
+                                    @if($praktek->canGenerateSurat() && !$hasSuratJalan)
+                                        <a href="{{ route('portal.praktekLapang.kesediaan', $praktek->id) }}" target="_blank" class="btn btn-ghost btn-sm" title="Download Surat Kesediaan" style="padding: 6px 12px; font-size: 11px; border: 1px solid #006876; color: #006876; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                            Kesediaan
+                                        </a>
+                                    @endif
+
                                     @if(auth()->user()->hasRole('staff') || auth()->user()->hasRole('kaprodi'))
-                                        <button type="button" class="topbar-icon-btn" onclick="editPraktek({{ $praktek->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer;">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                        </button>
-                                        <form action="{{ route('portal.praktekLapang.destroy', $praktek->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')">
+                                        {{-- Requirement 2: Hilangkan tombol edit jika Surat Jalan sudah ada --}}
+                                        @if(!$hasSuratJalan)
+                                            <button type="button" class="topbar-icon-btn" onclick="editPraktek({{ $praktek->id }})" title="Edit Data" style="color: var(--brand); border:none; background:none; cursor:pointer; padding: 4px;">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                            </button>
+                                        @endif
+                                        <form action="{{ route('portal.praktekLapang.destroy', $praktek->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data ini?')" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer;">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                            <button type="submit" class="topbar-icon-btn" title="Hapus Data" style="color: #EF4444; border:none; background:none; cursor:pointer; padding: 4px;">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                                             </button>
                                         </form>
                                     @endif
@@ -163,8 +194,8 @@
             </table>
         </div>
         {{-- Pagination --}}
-        <div style="padding: 24px; background: #fff; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between;">
-            <p style="font-size: 12px; color: var(--text-muted);">
+        <div style="padding: 16px 24px; background: #fff; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between;">
+            <p style="font-size: 11px; color: var(--text-muted);">
                 Menampilkan <strong>{{ $prakteks->firstItem() ?? 0 }}</strong> sampai <strong>{{ $prakteks->lastItem() ?? 0 }}</strong> dari <strong>{{ $prakteks->total() }}</strong> data
             </p>
             <div class="pagination-links">
@@ -174,17 +205,17 @@
     </div>
 
     {{-- Edit Modal --}}
-    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
-        <div class="card" style="width:100%; max-width:500px; padding:32px; background:#fff;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-                <h2 style="font-size:18px; font-weight:700;">Edit Data Praktek Lapang</h2>
-                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px;">&times;</button>
+    <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index:10000; align-items:center; justify-content:center; padding: 20px;">
+        <div class="card" style="width:100%; max-width:500px; padding:0; background:#fff; border-radius: 20px; overflow: hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding: 24px; border-bottom: 1px solid var(--border-light);">
+                <h2 style="font-size:18px; font-weight:800; color: var(--text-primary);">Edit Data Praktek Lapang</h2>
+                <button onclick="closeModal()" style="border:none; background:none; cursor:pointer; font-size:24px; color: var(--text-muted);">&times;</button>
             </div>
-            <form id="editForm" method="POST">
+            <form id="editForm" method="POST" enctype="multipart/form-data" style="padding: 24px;">
                 @csrf
                 @method('PUT')
                 <div class="form-group" style="margin-bottom:16px;">
-                    <label class="form-label">Lokasi</label>
+                    <label class="form-label">Lokasi Penelitian</label>
                     <input type="text" name="lokasi" id="edit_lokasi" class="form-control" required>
                 </div>
                 <div class="form-group" style="margin-bottom:16px;">
@@ -195,13 +226,23 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group" style="margin-bottom:24px;">
-                    <label class="form-label">Laporan</label>
-                    <textarea name="laporan" id="edit_laporan" class="form-control" rows="3"></textarea>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Laporan Akhir (PDF)</label>
+                        <input type="file" name="laporan" class="form-control" accept=".pdf">
+                        <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Pilih file untuk ganti laporan.</p>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Bukti Bayar (PDF)</label>
+                        <input type="file" name="bukti_bayar" class="form-control" accept=".pdf,image/*">
+                        <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Pilih file untuk ganti bukti bayar.</p>
+                    </div>
                 </div>
+
                 <div style="display:flex; justify-content:flex-end; gap:12px;">
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary" style="border-radius: 10px;">Batal</button>
+                    <button type="submit" class="btn btn-primary" style="border-radius: 10px; font-weight: 700;">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
@@ -218,7 +259,6 @@
                 form.action = `/portal/praktek-lapang/${id}`;
                 document.getElementById('edit_lokasi').value = data.lokasi;
                 document.getElementById('edit_dosen').value = data.dosen_pembimbing_id;
-                document.getElementById('edit_laporan').value = data.laporan || '';
                 
                 document.getElementById('editModal').style.display = 'flex';
             });
@@ -226,6 +266,14 @@
 
     function closeModal() {
         document.getElementById('editModal').style.display = 'none';
+    }
+    
+    // Close modal on click outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('editModal');
+        if (event.target == modal) {
+            closeModal();
+        }
     }
 </script>
 @endpush

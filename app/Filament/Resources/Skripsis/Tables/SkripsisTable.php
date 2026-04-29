@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Skripsis\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use App\Models\Skripsi;
@@ -31,23 +32,27 @@ class SkripsisTable
                 ->badge()
                 ->color(fn ($state) => $state === 'Lengkap' ? 'success' : 'warning'),
         ])
-        ->recordActions([
-            \Filament\Tables\Actions\EditAction::make(),
+        ->actions([
+            EditAction::make(),
             
-            \Filament\Tables\Actions\Action::make('generateKesediaan')
+            Action::make('generateKesediaan')
                 ->label('Surat Kesediaan')
                 ->icon('heroicon-o-document-text')
                 ->color('info')
-                ->visible(fn (Skripsi $record) => $record->isDataComplete())
+                ->visible(fn (Skripsi $record) => $record->canDownloadKesediaan())
                 ->action(function (Skripsi $record) {
                     $user = auth()->user();
                     $mahasiswa = $record->mahasiswa;
                     $prodi = $mahasiswa->programStudi;
 
+                    $filename = 'surat_kesediaan_sidang_' . $record->nim . '_' . time() . '.pdf';
+                    $path = 'pdf/surat/' . $filename;
+
                     $surat = \App\Models\Surat::create([
                         'jenis_surat' => 'Surat Kesediaan Sidang Skripsi',
                         'no_surat' => 'UN1/FP/KES-SKR-' . rand(100, 999) . '/2026',
                         'tujuan_surat' => $mahasiswa->nama,
+                        'file_path' => $path,
                     ]);
 
                     $data = [
@@ -62,8 +67,6 @@ class SkripsisTable
                     ];
 
                     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-sidang', $data);
-                    $filename = 'surat_kesediaan_sidang_' . $record->nim . '_' . time() . '.pdf';
-                    $path = 'pdf/surat/' . $filename;
 
                     \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
 
@@ -72,7 +75,7 @@ class SkripsisTable
                     return response()->streamDownload(fn () => print($pdf->output()), $filename);
                 }),
 
-            \Filament\Tables\Actions\Action::make('validateKesediaan')
+            Action::make('validateKesediaan')
                 ->label('Validasi Kesediaan')
                 ->icon('heroicon-o-check-badge')
                 ->color('success')
@@ -86,7 +89,7 @@ class SkripsisTable
                         ->send();
                 }),
 
-            \Filament\Tables\Actions\Action::make('generateUndangan')
+            Action::make('generateUndangan')
                 ->label('Surat Undangan')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
@@ -96,10 +99,14 @@ class SkripsisTable
                     $mahasiswa = $record->mahasiswa;
                     $prodi = $mahasiswa->programStudi;
 
+                    $filename = 'surat_undangan_sidang_' . $record->nim . '_' . time() . '.pdf';
+                    $path = 'pdf/surat/' . $filename;
+
                     $surat = \App\Models\Surat::create([
                         'jenis_surat' => 'Undangan Sidang Skripsi',
                         'no_surat' => 'UN1/FP/SKR-' . rand(100, 999) . '/2026',
                         'tujuan_surat' => $mahasiswa->nama,
+                        'file_path' => $path,
                     ]);
 
                     $data = [
@@ -113,8 +120,6 @@ class SkripsisTable
                     ];
 
                     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-undangan-sidang', $data);
-                    $filename = 'surat_undangan_sidang_' . $record->nim . '_' . time() . '.pdf';
-                    $path = 'pdf/surat/' . $filename;
 
                     \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
 
@@ -123,7 +128,7 @@ class SkripsisTable
                     return response()->streamDownload(fn () => print($pdf->output()), $filename);
                 }),
 
-            \Filament\Tables\Actions\Action::make('kirimWa')
+            Action::make('kirimWa')
                 ->label('Kirim WA')
                 ->icon('heroicon-o-chat-bubble-left-ellipsis')
                 ->color('success')

@@ -37,11 +37,16 @@ class PengajuanJudulsTable
                     ->badge()
                     ->formatStateUsing(fn ($state, $record) => $record->file_kesediaan ? ($state ? 'Valid' : 'Menunggu Validasi') : 'Belum Upload')
                     ->color(fn ($state, $record) => $record->file_kesediaan ? ($state ? 'success' : 'warning') : 'gray'),
+                TextColumn::make('notifikasi_whatsapp')
+                    ->label('WA')
+                    ->formatStateUsing(fn ($state) => $state ? 'Terkirim' : 'Belum')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'gray'),
             ])
             ->filters([
                 //
             ])
-            ->recordActions([
+            ->actions([
                 EditAction::make(),
                 Action::make('approve')
                     ->label('Approve')
@@ -88,8 +93,7 @@ class PengajuanJudulsTable
                             $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
                             $message = "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". Pengajuan judul skripsi Anda dengan judul: \"{$record->judul}\" telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
 
-                            $waService = new \App\Services\WhatsAppService();
-                            $waService->send($mahasiswa->no_hp, $message);
+                            \App\Jobs\SendWhatsAppNotification::dispatch($record, 'pengajuan_judul', $message);
                         }
 
                         Notification::make()
@@ -126,6 +130,77 @@ class PengajuanJudulsTable
 
                         Notification::make()
                             ->title('Kesediaan divalidasi & diteruskan ke seminar')
+                            ->success()
+                            ->send();
+                    }),
+                Action::make('generateKesediaan')
+                    ->label('Surat Kesediaan')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->visible(fn (\App\Models\PengajuanJudul $record) => $record->canDownloadKesediaan())
+                    ->action(function (\App\Models\PengajuanJudul $record) {
+                        $mahasiswa = $record->mahasiswa;
+                        $prodi = $mahasiswa->programStudi;
+
+                        $filename = 'surat_kesediaan_bimbingan_' . $record->nim . '_' . time() . '.pdf';
+                        $path = 'pdf/surat/' . $filename;
+
+                        $surat = \App\Models\Surat::create([
+                            'jenis_surat' => 'Surat Kesediaan Bimbingan',
+                            'no_surat' => $record->no_surat ?? 'UN1/FP/KES-BIM-' . rand(100, 999) . '/2026',
+                            'tujuan_surat' => $mahasiswa->nama,
+                            'file_path' => $path,
+                        ]);
+
+                        $data = [
+                            'pengajuanJudul' => $record,
+                            'mahasiswa' => $mahasiswa,
+                            'prodi' => $prodi,
+                            'surat' => $surat,
+                            'with_signature' => true,
+                            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+                            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+                            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+                        ];
+
+                        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.surat-kesediaan-bimbingan', $data);
+                        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
+
+                        $record->update(['surat_id' => $surat->id]);
+
+                        return response()->streamDownload(fn () => print($pdf->output()), $filename);
+                    }),
+
+                Action::make('kirimWa')
+                    ->label('Kirim WA')
+                    ->icon('heroicon-o-chat-bubble-left-ellipsis')
+                    ->color('success')
+                    ->form([
+                        Textarea::make('message')
+                            ->label('Pesan WhatsApp')
+                            ->rows(5)
+                            ->default(function (\App\Models\PengajuanJudul $record) {
+                                $hour = now()->format('H');
+                                $greeting = ($hour < 12) ? 'pagi' : (($hour < 15) ? 'siang' : (($hour < 18) ? 'sore' : 'malam'));
+                                $mahasiswa = $record->mahasiswa;
+                                $brandText = "kami dari Fakultas Pertanian, Sains dan Teknologi Universitas Panca Bhakti Pontianak.";
+                                
+                                if ($record->status === 'disetujui') {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pengajuan judul skripsi Anda telah DISETUJUI. Surat Kesediaan Bimbingan sudah dapat diunduh di sistem. Terima Kasih.";
+                                } elseif ($record->status === 'ditolak') {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Mohon maaf, pengajuan judul skripsi Anda BELUM DISETUJUI. Silakan cek keterangan di portal dan ajukan kembali. Terima Kasih.";
+                                } else {
+                                    return "Selamat {$greeting} " . ($mahasiswa->nama ?? '') . ". {$brandText} Pengajuan judul skripsi Anda sedang dalam proses verifikasi. Mohon cek berkala. Terima Kasih.";
+                                }
+                            })
+                            ->required(),
+                    ])
+                    ->modalHeading('Kirim Notifikasi WhatsApp')
+                    ->modalDescription('Tinjau dan ubah isi pesan sebelum mengirim.')
+                    ->action(function (\App\Models\PengajuanJudul $record, array $data) {
+                        \App\Jobs\SendWhatsAppNotification::dispatch($record, 'pengajuan_judul', $data['message']);
+                        Notification::make()
+                            ->title('Notifikasi WA sedang dikirim')
                             ->success()
                             ->send();
                     }),

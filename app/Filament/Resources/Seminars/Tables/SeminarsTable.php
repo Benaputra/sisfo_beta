@@ -43,7 +43,7 @@ class SeminarsTable
                     ->color(fn ($state) => $state === 'Siap' ? 'success' : 'warning'),
             ])
             ->filters([])
-            ->recordActions([
+            ->actions([
                 EditAction::make(),
                 
                 Action::make('generatePDF')
@@ -55,10 +55,14 @@ class SeminarsTable
                         $user = auth()->user();
                         $prodi = $record->mahasiswa->programStudi;
                         
+                        $filename = 'surat_undangan_' . $record->nim . '_' . time() . '.pdf';
+                        $path = 'pdf/surat/' . $filename;
+
                         $surat = Surat::create([
                             'jenis_surat' => 'Undangan Seminar',
                             'no_surat' => 'UN1/FP/STUDI-' . rand(100, 999) . '/2026',
                             'tujuan_surat' => $record->mahasiswa->nama,
+                            'file_path' => $path,
                         ]);
 
                         $data = [
@@ -72,8 +76,6 @@ class SeminarsTable
                         ];
 
                         $pdf = Pdf::loadView('pdf.surat-undangan-seminar', $data);
-                        $filename = 'surat_undangan_' . $record->nim . '_' . time() . '.pdf';
-                        $path = 'pdf/surat/' . $filename;
 
                         Storage::disk('public')->put($path, $pdf->output());
 
@@ -85,6 +87,45 @@ class SeminarsTable
                         return response()->streamDownload(function () use ($pdf) {
                             echo $pdf->stream();
                         }, $filename);
+                    }),
+
+                Action::make('generateKesediaan')
+                    ->label('Surat Kesediaan')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->visible(fn (Seminar $record) => $record->canDownloadKesediaan())
+                    ->action(function (Seminar $record) {
+                        $mahasiswa = $record->mahasiswa;
+                        $prodi = $mahasiswa->programStudi;
+
+                        $filename = 'surat_kesediaan_seminar_' . $record->nim . '_' . time() . '.pdf';
+                        $path = 'pdf/surat/' . $filename;
+
+                        $surat = Surat::create([
+                            'jenis_surat' => 'Surat Kesediaan Seminar',
+                            'no_surat' => 'UN1/FP/KES-SEM-' . rand(100, 999) . '/2026',
+                            'tujuan_surat' => $mahasiswa->nama,
+                            'file_path' => $path,
+                        ]);
+
+                        $data = [
+                            'seminar' => $record,
+                            'mahasiswa' => $mahasiswa,
+                            'prodi' => $prodi,
+                            'surat' => $surat,
+                            'with_signature' => true,
+                            'ttd_path' => $prodi->ttd_ketua_prodi ?? null,
+                            'ketua_nama' => $prodi->ketuaProdi?->nama ?? null,
+                            'ketua_nip' => $prodi->ketuaProdi?->nidn ?? null,
+                        ];
+
+                        $pdf = Pdf::loadView('pdf.surat-kesediaan-seminar', $data);
+
+                        Storage::disk('public')->put($path, $pdf->output());
+
+                        $record->update(['surat_kesediaan_id' => $surat->id]);
+
+                        return response()->streamDownload(fn () => print($pdf->output()), $filename);
                     }),
 
                 Action::make('validateKesediaan')

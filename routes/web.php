@@ -64,6 +64,8 @@ Route::middleware(['auth'])->prefix('portal')->name('portal.')->group(function (
     Route::get('/praktek-lapang/{id}/edit', [PortalController::class, 'editPraktekLapang'])->name('praktekLapang.edit');
     Route::put('/praktek-lapang/{id}', [PortalController::class, 'updatePraktekLapang'])->name('praktekLapang.update');
     Route::delete('/praktek-lapang/{id}', [PortalController::class, 'destroyPraktekLapang'])->name('praktekLapang.destroy');
+    Route::get('/praktek-lapang/{id}/kesediaan', [PortalController::class, 'downloadKesediaanPraktekLapang'])->name('praktekLapang.kesediaan');
+    Route::get('/praktek-lapang/{id}/surat-jalan', [PortalController::class, 'downloadSuratJalanPraktekLapang'])->name('praktekLapang.suratJalan');
     
     // Theme
     Route::post('/update-theme', [PortalController::class, 'updateTheme'])->name('updateTheme');

@@ -64,6 +64,7 @@ class SendWhatsAppNotification implements ShouldQueue
             'seminar' => 'seminar',
             'skripsi' => 'skripsi',
             'praktek_lapang' => 'praktek lapang',
+            'pengajuan_judul' => 'pengajuan judul',
             default => 'akademik',
         };
 

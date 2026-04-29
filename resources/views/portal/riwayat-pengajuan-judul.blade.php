@@ -345,11 +345,17 @@
             </div>
             <p style="font-size: 11px; color: var(--text-muted); text-align: center;">Pesan akan dikirim melalui Gateway Wablas secara otomatis.</p>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
             <button type="button" class="btn btn-secondary" onclick="closeWaModal()">Batal</button>
-            <button type="button" id="btnSendWa" class="btn btn-primary" style="background: #25D366; border-color: #25D366;">
-                Kirim Notifikasi Sekarang
-            </button>
+            <div style="display: flex; gap: 8px;">
+                <a id="btnManualWa" href="#" target="_blank" class="btn" style="background: #E5E7EB; color: #374151; border: none; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 16px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    Kirim Manual
+                </a>
+                <button type="button" id="btnSendWa" class="btn btn-primary" style="background: #25D366; border-color: #25D366; font-weight: 700;">
+                    Kirim Notifikasi Sekarang
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -420,6 +426,12 @@
     function openWaModal(id, phoneNumber, message) {
         waNumber.innerText = phoneNumber || 'Tidak ada nomor HP';
         waMessage.innerText = message;
+
+        // Setup link manual
+        const cleanNumber = (phoneNumber || '').replace(/\D/g, '');
+        const waLink = `https://wa.me/${cleanNumber.startsWith('0') ? '62'+cleanNumber.substring(1) : cleanNumber}?text=${encodeURIComponent(message)}`;
+        document.getElementById('btnManualWa').href = waLink;
+
         waModal.style.display = 'flex';
         
         btnSendWa.onclick = function() {
@@ -431,7 +443,10 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
+                },
+                body: JSON.stringify({
+                    message: document.getElementById('wa_display_message').innerText
+                })
             })
             .then(response => response.json())
             .then(data => {

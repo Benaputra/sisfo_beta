@@ -10,19 +10,21 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('pengajuan_judul', function (Blueprint $table) {
-            $table->id();
-            $table->string('nim');
-            $table->text('judul');
-            $table->string('bukti_bayar')->nullable();
-            $table->string('no_surat')->nullable();
-            $table->string('surat_kesediaan')->nullable();
-            $table->enum('status', ['pending', 'disetujui', 'ditolak'])->default('pending');
-            $table->text('keterangan')->nullable();
-            $table->timestamps();
+        if (!Schema::hasTable('pengajuan_judul')) {
+            Schema::create('pengajuan_judul', function (Blueprint $table) {
+                $table->id();
+                $table->string('nim');
+                $table->text('judul');
+                $table->string('bukti_bayar')->nullable();
+                $table->string('no_surat')->nullable();
+                $table->string('surat_kesediaan')->nullable();
+                $table->enum('status', ['pending', 'disetujui', 'ditolak'])->default('pending');
+                $table->text('keterangan')->nullable();
+                $table->timestamps();
 
-            $table->foreign('nim')->references('nim')->on('mahasiswa')->onDelete('cascade');
-        });
+                $table->foreign('nim')->references('nim')->on('mahasiswa')->onDelete('cascade');
+            });
+        }
     }
 
     /**

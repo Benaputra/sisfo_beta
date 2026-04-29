@@ -19,6 +19,7 @@ class PraktekLapang extends Model
         'bukti_bayar',
         'dosen_pembimbing_id',
         'surat_id',
+        'surat_jalan_id',
         'notifikasi_whatsapp',
     ];
 
@@ -39,7 +40,7 @@ class PraktekLapang extends Model
     }
 
     /**
-     * Relasi ke Surat Tugas/Pengantar
+     * Relasi ke Surat Kesediaan
      */
     public function surat(): BelongsTo
     {
@@ -47,10 +48,18 @@ class PraktekLapang extends Model
     }
 
     /**
+     * Relasi ke Surat Jalan
+     */
+    public function suratJalan(): BelongsTo
+    {
+        return $this->belongsTo(Surat::class, 'surat_jalan_id');
+    }
+
+    /**
      * Cek kelengkapan file (Bukti Bayar)
      */
     public function canGenerateSurat(): bool
     {
-        return !empty($this->bukti_bayar);
+        return !empty($this->bukti_bayar) && !empty($this->lokasi) && !empty($this->dosen_pembimbing_id);
     }
 }

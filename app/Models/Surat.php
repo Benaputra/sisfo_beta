@@ -16,6 +16,7 @@ class Surat extends Model
         'jenis_surat',
         'no_surat',
         'tujuan_surat',
+        'file_path',
     ];
 
     /**
